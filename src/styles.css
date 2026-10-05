@@ -134,3 +134,43 @@
 .approved-section{padding:65px clamp(18px,5vw,70px) 30px;max-width:1450px;margin:auto}.approved-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.approved-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--panel-2)}.approved-avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(56,217,150,.12);color:var(--green);font-weight:700}.approved-card b{font-size:12px}.approved-card p{margin:3px 0;color:var(--muted);font-size:10px}.approved-card small{color:var(--muted);font-size:9px}.approved-card button{border:0;background:transparent;color:var(--green);font-size:9px;white-space:nowrap}
 @media(max-width:900px){.approved-grid{grid-template-columns:1fr 1fr}.calendar-cell{min-height:105px}}
 @media(max-width:650px){.calendar-head{align-items:flex-start;flex-direction:column}.calendar-grid{min-width:680px}.calendar-page{overflow-x:auto}.approved-grid{grid-template-columns:1fr}.day-editor{grid-template-columns:55px 1fr}.day-editor button{grid-column:2}.day-editor textarea{grid-column:2}.calendar-nav{width:100%;justify-content:space-between}}
+
+
+/* Infinite interactive memory wall */
+.memory-wall-page{max-width:1450px;padding-bottom:100px}
+.wall-heading{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:25px}
+.wall-heading h1{font-size:clamp(46px,7vw,88px);letter-spacing:-.065em;line-height:.92;margin:8px 0 14px}
+.wall-heading .hero-text{max-width:680px}
+.wall-controls{display:flex;align-items:center;gap:5px;padding:7px;border:1px solid var(--line);border-radius:14px;background:var(--panel-2);white-space:nowrap}
+.wall-controls button{height:34px;min-width:35px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:var(--text);font-size:13px}
+.wall-controls button:hover{background:rgba(255,255,255,.07)}
+.wall-controls span{font:9px "DM Mono";color:var(--muted);padding:0 7px}
+
+.memory-wall{position:relative;height:min(70vh,760px);min-height:520px;overflow:hidden;border:1px solid var(--line);border-radius:28px;background:#c8bda7;box-shadow:0 30px 100px rgba(0,0,0,.22);touch-action:none;user-select:none}
+.memory-wall:before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.035),rgba(0,0,0,.035)),repeating-linear-gradient(0deg,rgba(80,58,35,.055) 0 1px,transparent 1px 5px);opacity:.8;pointer-events:none;z-index:2}
+.memory-wall:after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(35,26,16,.2);pointer-events:none;z-index:3}
+.wall-paper{position:absolute;left:50%;top:50%;width:6000px;height:4500px;transform-origin:center center;background-color:#c8bda7;background-image:radial-gradient(circle at 20% 20%,rgba(255,255,255,.09),transparent 20%),repeating-linear-gradient(0deg,rgba(80,58,35,.045) 0 1px,transparent 1px 5px);transition:transform .18s ease-out}
+.wall-center-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:10px "DM Mono";letter-spacing:.22em;color:rgba(62,51,38,.27);pointer-events:none;white-space:nowrap}
+.memory-note{position:absolute;left:50%;top:50%;width:235px;min-height:190px;padding:27px 20px 19px;border:0;color:#2f2a23;text-align:left;box-shadow:0 14px 28px rgba(38,29,19,.24),0 3px 5px rgba(38,29,19,.16);cursor:grab;transition:box-shadow .2s,filter .2s;transform-origin:center;touch-action:none}
+.memory-note:active{cursor:grabbing}
+.memory-note:hover,.memory-note.selected{z-index:30;box-shadow:0 24px 48px rgba(38,29,19,.34),0 5px 8px rgba(38,29,19,.16);filter:saturate(1.05)}
+.memory-note:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,rgba(255,255,255,.22),transparent 35%,rgba(0,0,0,.04))}
+.memory-note.yellow{background:#f5e59d}.memory-note.cream{background:#f1e9d7}.memory-note.green{background:#c7dfbf}.memory-note.pink{background:#efd0ca}.memory-note.blue{background:#cbdde5}
+.memory-note:nth-child(3n){width:220px;min-height:175px}.memory-note:nth-child(4n){width:260px;min-height:205px}
+.memory-note .note-pin{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:#40382f;color:#eee8d9;font-size:8px;box-shadow:0 2px 3px rgba(0,0,0,.25)}
+.memory-note small{display:block;margin-bottom:13px;font:8px "DM Mono";letter-spacing:.06em;opacity:.58}
+.memory-note h2{margin:0 0 9px;font:700 22px/1.05 "Space Grotesk",sans-serif;letter-spacing:-.035em}
+.memory-note p{margin:0;font:14px/1.55 "Space Grotesk",sans-serif;max-width:100%;white-space:pre-wrap}
+.memory-note em{display:block;margin-top:16px;font:7px "DM Mono";opacity:.34;letter-spacing:.08em}
+.empty-wall{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;gap:8px;text-align:center;color:#51483c}.empty-wall b{font-size:22px}.empty-wall span{font:9px "DM Mono";opacity:.65}
+.wall-help{position:absolute;z-index:5;left:50%;bottom:16px;transform:translateX(-50%);padding:8px 12px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(25,21,16,.5);backdrop-filter:blur(10px);color:#f4ead8;font:8px "DM Mono";letter-spacing:.08em;white-space:nowrap}
+.write-wall{display:grid;grid-template-columns:.8fr 1.2fr;gap:55px;margin-top:60px;padding:42px;border:1px solid var(--line);border-radius:25px;background:var(--panel-2)}
+.write-wall h2{font-size:clamp(32px,4vw,52px);letter-spacing:-.05em;margin:5px 0 12px}.write-wall p:not(.eyebrow){color:var(--muted);font-size:12px;line-height:1.8;max-width:520px}
+.wall-form{margin:0;display:grid;gap:10px}.wall-form input,.wall-form textarea{background:var(--bg)}.wall-form textarea{min-height:170px}
+.note-reader{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:25px;background:rgba(10,10,8,.7);backdrop-filter:blur(7px)}
+.note-reader-card{position:relative;width:min(560px,100%);padding:45px 42px;background:#f5e59d;color:#302a22;box-shadow:0 35px 100px rgba(0,0,0,.4);transform:rotate(-1deg)}
+.note-reader-card small{font:8px "DM Mono";opacity:.55}.note-reader-card h2{font-size:38px;line-height:1;margin:13px 0}.note-reader-card p{font-size:16px;line-height:1.75;white-space:pre-wrap}
+.note-reader-card .x{color:#302a22;border-color:rgba(48,42,34,.18)}
+.theme-light .memory-wall{box-shadow:0 30px 90px rgba(40,35,25,.14)}
+@media(max-width:850px){.wall-heading{align-items:flex-start;flex-direction:column}.memory-wall{min-height:480px;height:65vh}.write-wall{grid-template-columns:1fr;gap:25px;padding:28px}}
+@media(max-width:550px){.memory-wall{min-height:450px;border-radius:20px}.memory-note{width:190px!important;min-height:165px!important;padding:25px 15px 15px}.memory-note h2{font-size:18px}.memory-note p{font-size:12px}.wall-help{font-size:7px;max-width:90%;text-align:center}.write-wall{margin-top:35px}.wall-controls{width:100%;justify-content:space-between}}

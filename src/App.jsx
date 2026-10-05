@@ -48,6 +48,8 @@ export default function App() {
   const [name,setName] = useState("");
   const [draft,setDraft] = useState(null);
   const [alertsOpen,setAlertsOpen] = useState(true);
+  const [adminOpen,setAdminOpen] = useState(false);
+  const [adminPassword,setAdminPassword] = useState("");
   const [story,setStory] = useState({title:"",text:""});
   const counts = useMemo(() => trips.reduce((a,t)=>({...a,[t.status]:a[t.status]+1}),{completed:0,upcoming:0,wishlist:0}),[trips]);
   const upcoming = trips.filter(t=>t.status==="upcoming"&&t.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate));
@@ -78,7 +80,7 @@ export default function App() {
   return <main className="site">
     <header className="topbar">
       <button className="brand" onClick={()=>setPage("home")}><span className="brand-mark">S×M</span><span><strong>OUR JOURNEY</strong><small>Siddhu × Mani</small></span></button>
-      <nav>{["home","trips","memories","stories"].map(p=><button className={page===p?"active":""} onClick={()=>setPage(p)} key={p}>{p}</button>)}{role==="admin"&&<button className={page==="admin"?"active admin":""} onClick={()=>setPage("admin")}>Admin</button>}<button className="role" onClick={()=>{const n=role==="user"?"admin":"user";setRole(n);setPage(n==="admin"?"admin":"home")}}>{role==="user"?"Admin mode":"User mode"}</button></nav>
+      <nav>{["home","trips","memories","stories"].map(p=><button className={page===p?"active":""} onClick={()=>setPage(p)} key={p}>{p}</button>)}{role==="admin"?<button className={page==="admin"?"active admin":""} onClick={()=>setPage("admin")}>Admin Dashboard</button>:<button className="role" onClick={()=>setAdminOpen(true)}>Admin Login</button>}{role==="admin"&&<button className="role" onClick={()=>{setRole("user");setPage("home")}}>User mode</button>}</nav>
     </header>
     {toast&&<div className="toast">{toast}</div>}\n    {alertsOpen && soon.length>0 && <div className="alert-bg"><div className="alert-box"><button className="x" onClick={()=>setAlertsOpen(false)}>×</button><p className="eyebrow">TRIP ALERT</p><h2>Your next adventure is getting close.</h2>{soon.map(t=><button className="alert-trip" key={t.id} onClick={()=>{setAlertsOpen(false);openTrip(t)}}><span>{t.icon}</span><b>{t.name}</b><small>{daysUntil(t.startDate)} days · ₹{t.budget.toLocaleString("en-IN")} · {(registrations[t.id]||t.members).length}/{t.capacity} going</small></button>)}</div></div>}
     {page==="home"&&<Home trips={trips} counts={counts} filter={filter} setFilter={setFilter} openTrip={openTrip} nearest={nearest} registrations={registrations}/>}
@@ -87,6 +89,7 @@ export default function App() {
     {page==="memories"&&<Gallery media={media} role={role} setMedia={setMedia}/>}
     {page==="stories"&&<Stories stories={stories.filter(s=>s.status==="approved")} story={story} setStory={setStory} submit={submitStory}/>}
     {page==="admin"&&role==="admin"&&<Admin trips={trips} stories={stories} onEdit={setDraft} approve={approve} media={media} setMedia={setMedia} setTrips={setTrips}/>}
+    {adminOpen&&<div className="modal-bg"><form className="modal" onSubmit={e=>{e.preventDefault();if(adminPassword==="admin123"){setRole("admin");setPage("admin");setAdminOpen(false);setAdminPassword("");pop("Admin access granted ✓")}else pop("Wrong admin password.")}}><button type="button" className="x" onClick={()=>{setAdminOpen(false);setAdminPassword("")}}>×</button><p className="eyebrow">SECURE AREA</p><h2>Admin login</h2><p className="hero-text">Enter the admin password to open the control center.</p><label>Password<input autoFocus type="password" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)} placeholder="Admin password"/></label><button className="primary">Enter dashboard →</button><small style={{opacity:.55}}>Demo password: admin123</small></form></div>}
     {draft&&<div className="modal-bg"><form className="modal" onSubmit={saveTrip}><button type="button" className="x" onClick={()=>setDraft(null)}>×</button><p className="eyebrow">ADMIN · EDIT TRIP</p><h2>{draft.name}</h2><label>Name<input name="name" defaultValue={draft.name}/></label><label>Place<input name="place" defaultValue={draft.place}/></label><div className="two"><label>Status<select name="status" defaultValue={draft.status}><option value="completed">Completed</option><option value="upcoming">Upcoming</option><option value="wishlist">Wishlist</option></select></label><label>Capacity<input name="capacity" type="number" defaultValue={draft.capacity}/></label></div><div className="two"><label>Start<input name="startDate" type="date" defaultValue={draft.startDate}/></label><label>End<input name="endDate" type="date" defaultValue={draft.endDate}/></label></div><label>Budget ₹<input name="budget" type="number" defaultValue={draft.budget}/></label><label>Summary<textarea name="summary" defaultValue={draft.summary}/></label><button className="primary">Save trip</button></form></div>}
     <footer>PRIVATE TRAVEL HUB · PLANS → JOURNEYS → MEMORIES</footer>
   </main>;

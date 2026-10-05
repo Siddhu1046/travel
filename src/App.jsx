@@ -153,7 +153,36 @@ function Home({trips,counts,filter,setFilter,openTrip,nearest,registrations,requ
 
 function TripCard({trip,click,requests=[]}) { const s=STATUS[trip.status]; const approved=requests.filter(r=>r.status==="approved"&&String(r.tripId)===String(trip.id)); return <button className="trip-card" style={{"--status":s.color}} onClick={click}><div className="trip-card-top"><span className="trip-icon">{trip.icon}</span><span className="status-pill">{s.label}</span></div><h3>{trip.name}</h3><p>{trip.place}</p><div className="trip-card-bottom">{dateText(trip.startDate)} <span>{approved.length?approved.length+" approved · ":""}View →</span></div></button>; }
 
-function TripList({trips,counts,filter,setFilter,openTrip,requests}) { return <section className="page"><p className="eyebrow">DESTINATION INDEX</p><h1>Trips & plans</h1><div className="filterbar">{["all","completed","upcoming","wishlist"].map(k=><button className={filter===k?"active":""} onClick={()=>setFilter(k)} key={k}>{k} {k!=="all"&&counts[k]}</button>)}</div><div className="big-grid">{trips.filter(t=>filter==="all"||t.status===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)}/>)}</div></section>; }
+function TripList({trips,counts,filter,setFilter,openTrip,requests}) { return <section className="page"><p className="eyebrow">DESTINATION INDEX</p><h1>Trips & plans</h1><div className="filterbar">{["all","completed","upcoming","wishlist"].map(k=><button className={filter===k?"active":""} onClick={()=>setFilter(k)} key={k}>{k} {k!=="all"&&counts[k]}</button>)}</div><div className="big-grid">{trips.filter(t=>filter==="all"||t.status===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section>; }
+
+function ItineraryEditor({initial}) {
+  const [days,setDays]=useState(initial);
+  const update=(i,key,value)=>setDays(days.map((d,n)=>n===i?{...d,[key]:value}:d));
+  const add=()=>setDays([...days,{day:String(days.length+1).padStart(2,"0"),title:"New day",text:"Add activities, places, food stops or updates."}]);
+  const remove=i=>setDays(days.filter((_,n)=>n!==i).map((d,n)=>({...d,day:String(n+1).padStart(2,"0")})));
+  return <div className="itinerary-editor"><label>Day-by-day itinerary</label><input type="hidden" name="itinerary" value={JSON.stringify(days)}/>{days.map((d,i)=><div className="day-editor" key={i}><span>DAY {d.day}</span><input value={d.title} onChange={e=>update(i,"title",e.target.value)} placeholder="Activity / heading"/><textarea value={d.text} onChange={e=>update(i,"text",e.target.value)} placeholder="What happens this day?"/><button type="button" className="remove-day" onClick={()=>remove(i)}>Remove day</button></div>)}<button type="button" className="add-day" onClick={add}>+ Add another day</button></div>;
+}
+
+function CalendarPage({trips,openTrip,theme}) {
+  const [cursor,setCursor]=useState(new Date());
+  const year=cursor.getFullYear(), month=cursor.getMonth();
+  const first=new Date(year,month,1), start=(first.getDay()+6)%7, days=new Date(year,month+1,0).getDate();
+  const cells=Array.from({length:start+days},(_,i)=>i<start?null:i-start+1);
+  const key=d=>d?new Date(d+"T00:00:00").toISOString().slice(0,10):"";
+  const events=[];
+  trips.forEach(t=>{
+    if(t.startDate){const s=new Date(t.startDate+"T00:00:00"),e=new Date((t.endDate||t.startDate)+"T00:00:00");for(let d=1;d<=days;d++){const x=new Date(year,month,d);if(x>=s&&x<=e)events.push({day:d,trip:t,possible:false});}}
+    (t.possibleDates||[]).forEach(d=>{if(key(d).slice(0,7)===`${year}-${String(month+1).padStart(2,"0")}`)events.push({day:Number(d.slice(8,10)),trip:t,possible:true});});
+  });
+  const byDay=d=>events.filter(e=>e.day===d);
+  return <section className="page calendar-page"><div className="calendar-head"><div><p className="eyebrow">TRAVEL CALENDAR</p><h1>When we go. When we might go.</h1><p className="hero-text">Completed journeys, confirmed adventures and possible dates for the trips still on our wishlist.</p></div><div className="calendar-nav"><button onClick={()=>setCursor(new Date(year,month-1,1))}>←</button><b>{new Intl.DateTimeFormat("en-IN",{month:"long",year:"numeric"}).format(cursor)}</b><button onClick={()=>setCursor(new Date(year,month+1,1))}>→</button></div></div><div className="calendar-legend"><span><i className="cal-dot completed"/>Completed</span><span><i className="cal-dot upcoming"/>Upcoming</span><span><i className="cal-dot wishlist"/>Possible date</span></div><div className="calendar-grid">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}{cells.map((d,i)=><div className={"calendar-cell "+(!d?"empty-cell":"")} key={i}>{d&&<><b>{d}</b>{byDay(d).map((e,j)=><button key={j} className={"calendar-event "+(e.possible?"possible":e.trip.status)} onClick={()=>openTrip(e.trip)}><span>{e.trip.icon}</span>{e.trip.name}</button>)}</>}</div>)}</div></section>;
+}
+
+function ApprovedUpdates({requests,trips,openTrip}) {
+  const approved=requests.filter(r=>r.status==="approved").slice(0,6);
+  if(!approved.length)return null;
+  return <section className="approved-section"><div className="section-heading"><div><p className="eyebrow">CREW UPDATES</p><h2>New people joining the journey.</h2></div><span className="section-note">RECENTLY APPROVED</span></div><div className="approved-grid">{approved.map(r=>{const t=trips.find(x=>String(x.id)===String(r.tripId));return <article className="approved-card" key={r.id}><span className="approved-avatar">{r.name?.[0]||"?"}</span><div><b>{r.name}</b><p>{t?<>{t.name} · {r.people||1} traveller{Number(r.people)!==1?"s":""}</>:r.destination}</p>{r.instagram&&<small>◎ {r.instagram}</small>}</div>{t&&<button onClick={()=>openTrip(t)}>View trip →</button>}</article>})}</div></section>;
+}
 
 function TripPage({trip,registrations,requests,name,setName,register,back}) {
   const approved=requests.filter(r=>r.status==="approved"&&String(r.tripId)===String(trip.id));

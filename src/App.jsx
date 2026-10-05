@@ -48,6 +48,7 @@ export default function App() {
   const [filter,setFilter] = useState("all");
   const [toast,setToast] = useState("");
   const [name,setName] = useState("");
+  const [application,setApplication] = useState({name:"",phone:"",age:"",city:"",message:""});
   const [draft,setDraft] = useState(null);
   const [newTripOpen,setNewTripOpen] = useState(false);
   const [alertsOpen,setAlertsOpen] = useState(true);
@@ -64,17 +65,18 @@ export default function App() {
   const pop = m => { setToast(m); setTimeout(()=>setToast(""),3000); };
   const openTrip = t => { setSelected(t); setPage("trip"); };
   const register = t => {
-    if(!name.trim()) return pop("Enter your name first.");
-    const list = registrations[t.id] || [];
-    if(list.includes(name.trim())) return pop("You are already registered.");
-    setRegistrations({...registrations,[t.id]:[...list,name.trim()]});
-    setName(""); pop("Registered for "+t.name+" ✓");
+    if(!application.name.trim()||!application.phone.trim()) return pop("Name and phone number are required.");
+    const already=requests.some(r=>String(r.tripId)===String(t.id)&&r.phone===application.phone&&r.status!=="rejected");
+    if(already) return pop("You already applied for this trip.");
+    setRequests([{id:Date.now(),type:"trip-application",tripId:t.id,destination:t.name,name:application.name.trim(),phone:application.phone.trim(),age:application.age,city:application.city,message:application.message,status:"pending",submittedAt:new Date().toISOString()},...requests]);
+    setApplication({name:"",phone:"",age:"",city:"",message:""});
+    pop("Application sent for confirmation ✓");
   };
   const submitStory = e => {
     e.preventDefault();
     if(!story.title.trim()||!story.text.trim()) return;
-    setStories([{id:Date.now(),author:"Siddhu",title:story.title,text:story.text,status:"pending",date:new Date().toISOString().slice(0,10)},...stories]);
-    setStory({title:"",text:""}); pop("Story sent to admin for approval.");
+    setStories([{id:Date.now(),author:"Siddhu",title:story.title,text:story.text,status:"approved",date:new Date().toISOString().slice(0,10)},...stories]);
+    setStory({title:"",text:""}); pop("Memory pinned to the wall ✓");
   };
   const approve = (id,status) => { setStories(stories.map(s=>s.id===id?{...s,status}:s)); pop(status==="approved"?"Story published.":"Story rejected."); };
   const submitRequest = e => {
@@ -111,7 +113,7 @@ export default function App() {
     {toast&&<div className="toast">{toast}</div>}\n    {alertsOpen && soon.length>0 && <div className="alert-bg"><div className="alert-box"><button className="x" onClick={()=>setAlertsOpen(false)}>×</button><p className="eyebrow">TRIP ALERT</p><h2>Your next adventure is getting close.</h2>{soon.map(t=><button className="alert-trip" key={t.id} onClick={()=>{setAlertsOpen(false);openTrip(t)}}><span>{t.icon}</span><b>{t.name}</b><small>{daysUntil(t.startDate)} days · ₹{t.budget.toLocaleString("en-IN")} · {(registrations[t.id]||t.members).length}/{t.capacity} going</small></button>)}</div></div>}
     {page==="home"&&<Home trips={trips} counts={counts} filter={filter} setFilter={setFilter} openTrip={openTrip} nearest={nearest} registrations={registrations} requests={requests} theme={theme}/>}
     {page==="trips"&&<TripList trips={trips} counts={counts} filter={filter} setFilter={setFilter} openTrip={openTrip} requests={requests}/>}\n    {page==="calendar"&&<CalendarPage trips={trips} openTrip={openTrip} theme={theme}/>}
-    {page==="trip"&&selected&&<TripPage trip={selected} registrations={registrations} requests={requests} name={name} setName={setName} register={()=>register(selected)} back={()=>setPage("trips")}/>}
+    {page==="trip"&&selected&&<TripPage trip={selected} registrations={registrations} requests={requests} application={application} setApplication={setApplication} register={()=>register(selected)} back={()=>setPage("trips")}/>}
     {page==="memories"&&<Gallery media={media} role={role} setMedia={setMedia}/>}
     {page==="stories"&&<Stories stories={stories.filter(s=>s.status==="approved")} story={story} setStory={setStory} submit={submitStory} positions={wallPositions} setPositions={setWallPositions}/>}
     {page==="admin"&&role==="admin"&&<Admin trips={trips} registrations={registrations} stories={stories} onEdit={setDraft} approve={approve} media={media} setMedia={setMedia} setTrips={setTrips} setStories={setStories} requests={requests} reviewRequest={reviewRequest} setRequests={setRequests} onCreate={()=>setNewTripOpen(true)}/>}
@@ -185,9 +187,11 @@ function ApprovedUpdates({requests,trips,openTrip}) {
   return <section className="approved-section"><div className="section-heading"><div><p className="eyebrow">CREW UPDATES</p><h2>New people joining the journey.</h2></div><span className="section-note">RECENTLY APPROVED</span></div><div className="approved-grid">{approved.map(r=>{const t=trips.find(x=>String(x.id)===String(r.tripId));return <article className="approved-card" key={r.id}><span className="approved-avatar">{r.name?.[0]||"?"}</span><div><b>{r.name}</b><p>{t?<>{t.name} · {r.people||1} traveller{Number(r.people)!==1?"s":""}</>:r.destination}</p>{r.instagram&&<small>◎ {r.instagram}</small>}</div>{t&&<button onClick={()=>openTrip(t)}>View trip →</button>}</article>})}</div></section>;
 }
 
-function TripPage({trip,registrations,requests,name,setName,register,back}) {
+function TripPage({trip,registrations,requests,application,setApplication,register,back}) {
   const approved=requests.filter(r=>r.status==="approved"&&String(r.tripId)===String(trip.id));
+  const pending=requests.filter(r=>r.status==="pending"&&String(r.tripId)===String(trip.id));
   const people=Array.from(new Set([...(registrations[trip.id]||trip.members),...approved.map(r=>r.name)]));
+  const appliedCount=new Set([...approved,...pending].map(r=>r.phone||r.name)).size;
   const completed=trip.status==="completed";
   const itinerary=trip.itinerary||[
     {day:"01",title:"Arrival & first impressions",text:"Reach the destination, settle in and begin exploring together."},
@@ -203,7 +207,7 @@ function TripPage({trip,registrations,requests,name,setName,register,back}) {
       <section className="itinerary-section"><div className="section-heading"><div><p className="eyebrow">THE STORY</p><h2>Our itinerary</h2></div><span className="section-note">DAY BY DAY</span></div><div className="itinerary">{itinerary.map((x,i)=><article className="itinerary-item" key={i}><span>{x.day}</span><div><b>{x.title}</b><p>{x.text}</p></div></article>)}</div></section>
       <TripMemoryStrip trip={trip}/>
       <section className="team-section"><div><p className="eyebrow">THE CREW</p><h2>People who made it a memory.</h2></div><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></section>
-    </>:<><div className="detail-grid"><article className="info-card">📍<b>LOCATION</b><h3>{trip.place}</h3><p>Route and day-by-day itinerary.</p></article><article className="info-card">💰<b>BUDGET</b><h3>₹{trip.budget.toLocaleString("en-IN")}</h3><p>Planned budget for the trip.</p></article><article className="info-card">👥<b>CREW</b><h3>{people.length} / {trip.capacity}</h3><p>Places currently filled.</p></article></div>{trip.status==="upcoming"&&<section className="register-card"><div><p className="eyebrow">JOIN THIS TRIP</p><h2>{daysUntil(trip.startDate)} days to go</h2><p>Reserve your place in the crew.</p></div><div className="register-form"><input value={name} onChange={e=>setName(e.target.value)} placeholder="Your name"/><button className="primary" onClick={register}>Register →</button></div></section>}<h2>Current crew</h2><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></>}
+    </>:<><div className="detail-grid"><article className="info-card">📍<b>LOCATION</b><h3>{trip.place}</h3><p>Route and day-by-day itinerary.</p></article><article className="info-card">💰<b>BUDGET</b><h3>₹{trip.budget.toLocaleString("en-IN")}</h3><p>Planned budget for the trip.</p></article><article className="info-card">👥<b>APPLIED</b><h3>{appliedCount} / {trip.capacity}</h3><p>People have applied. Names appear only after confirmation.</p></article></div>{trip.status==="upcoming"&&<section className="register-card"><div><p className="eyebrow">JOIN THIS TRIP</p><h2>Send for confirmation</h2><p>Apply with a few details. Your place is confirmed only after admin approval.</p><small>{appliedCount} applied · {Math.max(0,trip.capacity-appliedCount)} spots left</small></div><form className="register-form" onSubmit={e=>{e.preventDefault();register();}}><input value={application.name} onChange={e=>setApplication({...application,name:e.target.value})} placeholder="Full name" required/><input value={application.phone} onChange={e=>setApplication({...application,phone:e.target.value})} placeholder="Mobile number" required/><div className="two"><input value={application.age} onChange={e=>setApplication({...application,age:e.target.value})} type="number" min="13" max="100" placeholder="Age"/><input value={application.city} onChange={e=>setApplication({...application,city:e.target.value})} placeholder="City"/></div><textarea value={application.message} onChange={e=>setApplication({...application,message:e.target.value})} placeholder="Anything we should know? (optional)"/><button className="primary">Send for confirmation →</button></form></section>}<h2>Current crew</h2><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></>}
   </section>;
 }
 function TripMemoryStrip({trip}) {
@@ -317,7 +321,7 @@ function Stories({stories,story,setStory,submit,positions={},setPositions=()=>{}
             <small>{s.author} · {dateText(s.date)}</small>
             <h2>{s.title}</h2>
             <p>{s.text}</p>
-            <em>double click to read</em>
+            <em>double click to read</em>{s.author==="Siddhu"&&<div className="note-actions"><button type="button" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();onEdit?.(s)}}>Edit</button><button type="button" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();onRemove?.(s)}}>Remove</button></div>}
           </article>
         })}
         {!stories.length&&<div className="empty-wall"><b>The wall is waiting.</b><span>Be the first person to leave a memory.</span></div>}
@@ -329,12 +333,12 @@ function Stories({stories,story,setStory,submit,positions={},setPositions=()=>{}
       <div>
         <p className="eyebrow">WRITE ON THE WALL</p>
         <h2>Your memory belongs here.</h2>
-        <p>Write something from a trip, a person, a place or a moment you never want to forget. Admin approval keeps the public wall clean.</p>
+        <p>Write something from a trip, a person, a place or a moment you never want to forget. Your note appears instantly. Admin can remove it or send it to moderation if needed.</p>
       </div>
       <form className="story-form wall-form" onSubmit={submit}>
         <input placeholder="Give your memory a title" value={story.title} onChange={e=>setStory({...story,title:e.target.value})}/>
         <textarea placeholder="What happened? Tell the story..." value={story.text} onChange={e=>setStory({...story,text:e.target.value})}/>
-        <button className="primary">Pin my memory →</button>
+        <button className="primary">Pin directly to wall →</button>
       </form>
     </div>
 
@@ -359,7 +363,8 @@ function Admin({trips,registrations,stories,onEdit,approve,media,setMedia,setTri
   const pendingRequests=requests.filter(r=>r.status==="pending");
   const addMedia=()=>{const url=prompt("Paste image/video URL");if(url)setMedia([{id:Date.now(),type:/mp4|webm/i.test(url)?"video":"photo",title:"New memory",trip:"Our journey",url},...media]);};
   const editStory=s=>{const title=prompt("Story title",s.title);if(title===null)return;const text=prompt("Story text",s.text);if(text===null)return;setStories(stories.map(x=>x.id===s.id?{...x,title,text,status:"pending",editedAt:new Date().toISOString()}:x));};
-  const deleteStory=s=>{if(confirm("Remove this story permanently?"))setStories(stories.filter(x=>x.id!==s.id));};
+  const deleteStory=s=>{if(confirm("Remove this memory permanently?"))setStories(stories.filter(x=>x.id!==s.id));};
+  const sendToRequests=s=>setStories(stories.map(x=>x.id===s.id?{...x,status:"pending",moderationNote:"Sent by admin for review"}:x));
   const editMedia=m=>{const title=prompt("Memory title",m.title);if(title===null)return;const trip=prompt("Trip name",m.trip);if(trip===null)return;setMedia(media.map(x=>x.id===m.id?{...x,title,trip}:x));};
   const deleteMedia=m=>{if(confirm("Delete this memory?"))setMedia(media.filter(x=>x.id!==m.id));};
   const requestHistory=requests;
@@ -369,8 +374,8 @@ function Admin({trips,registrations,stories,onEdit,approve,media,setMedia,setTri
     <div className="admin-hero"><div><p className="eyebrow">CONTROL CENTER · FULL ACCESS</p><h1>Manage the entire journey.</h1><p className="hero-text">Trips, applications, stories, memories, crew and public content — everything in one place.</p></div><button className="primary" onClick={onCreate}>+ Create trip</button></div>
     <div className="admin-command"><button className={tab==="overview"?"active":""} onClick={()=>setTab("overview")}>Overview</button><button className={tab==="trips"?"active":""} onClick={()=>setTab("trips")}>Trips</button><button className={tab==="requests"?"active":""} onClick={()=>setTab("requests")}>Requests <b>{pendingRequests.length}</b></button><button className={tab==="stories"?"active":""} onClick={()=>setTab("stories")}>Stories <b>{pendingStories.length}</b></button><button className={tab==="media"?"active":""} onClick={()=>setTab("media")}>Memories</button><button className={tab==="site"?"active":""} onClick={()=>setTab("site")}>Site controls</button></div>
     {(tab==="overview"||tab==="trips")&&<><div className="admin-stats"><div><b>{trips.length}</b><span>trips</span></div><div><b>{trips.filter(t=>t.status==="completed").length}</b><span>completed</span></div><div><b>{trips.filter(t=>t.status==="upcoming").length}</b><span>upcoming</span></div><div><b>{pendingRequests.length}</b><span>pending requests</span></div></div><h2>Trip management</h2><div className="admin-list">{trips.map(t=><div className="admin-row" key={t.id}><span>{t.icon}</span><div><b>{t.name}</b><small>{t.place} · {t.startDate||"no date"} · ₹{t.budget.toLocaleString("en-IN")}</small></div><select value={t.status} onChange={e=>setTrips(trips.map(x=>x.id===t.id?{...x,status:e.target.value}:x))}><option value="completed">Completed</option><option value="upcoming">Upcoming</option><option value="wishlist">Wishlist</option></select><button onClick={()=>onEdit(t)}>Edit all details</button></div>)}</div></>}
-    {(tab==="overview"||tab==="requests")&&<><h2>Trip requests <span className="admin-count">{pendingRequests.length} pending</span></h2><div className="request-list">{requestHistory.length?requestHistory.map(r=><article className="request-card" key={r.id}><div className="request-card-head"><div><b>{r.name}</b><span>{r.destination} · {r.people||1} traveller{Number(r.people)!==1?"s":""}</span></div><span className={"request-status "+r.status}>{r.status.toUpperCase()}</span></div><div className="request-details"><span>📞 {r.phone}</span><span>◎ {r.instagram||"No Instagram"}</span><span>📅 {r.date?dateText(r.date):"Flexible date"}</span></div>{r.message&&<p>{r.message}</p>}<div className="request-actions">{r.status==="pending"?<><button className="approve" onClick={()=>reviewRequest(r.id,"approved")}>Approve</button><button className="reject" onClick={()=>reviewRequest(r.id,"rejected")}>Reject</button></>:<button onClick={reopenRequest}>Return to requests</button>}<button className="reject" onClick={()=>removeRequest(r)}>Delete</button></div></article>):<div className="empty">No trip requests yet.</div>}</div></>}
-    {(tab==="overview"||tab==="stories")&&<><h2>Story moderation <span className="admin-count">{pendingStories.length} waiting</span></h2><div className="admin-list">{stories.length?stories.map(s=><div className="admin-row story-admin-row" key={s.id}><div><b>{s.title}</b><small>{s.author} · {s.status.toUpperCase()} · {s.text}</small></div>{s.status==="pending"?<><button className="approve" onClick={()=>approve(s.id,"approved")}>Approve</button><button className="reject" onClick={()=>approve(s.id,"rejected")}>Reject</button></>:<><button onClick={()=>editStory(s)}>Edit → requests</button><button className="reject" onClick={()=>deleteStory(s)}>Remove</button></>}</div>):<div className="empty">No stories yet.</div>}</div></>}
+    {(tab==="overview"||tab==="requests")&&<><h2>Trip requests <span className="admin-count">{pendingRequests.length} pending</span></h2><div className="request-list">{requestHistory.length?requestHistory.map(r=><article className="request-card" key={r.id}><div className="request-card-head"><div><b>{r.name}</b><span>{r.destination} · {r.people||1} traveller{Number(r.people)!==1?"s":""}</span></div><span className={"request-status "+r.status}>{r.status.toUpperCase()}</span></div><div className="request-details"><span>📞 {r.phone||"No phone"}</span><span>{r.age?"Age "+r.age+" · ":""}{r.city||"City not provided"}</span><span>📅 {r.date?dateText(r.date):"Flexible date"}</span></div>{r.message&&<p>{r.message}</p>}<div className="request-actions">{r.status==="pending"?<><button className="approve" onClick={()=>reviewRequest(r.id,"approved")}>Approve</button><button className="reject" onClick={()=>reviewRequest(r.id,"rejected")}>Reject</button></>:<button onClick={reopenRequest}>Return to requests</button>}<button className="reject" onClick={()=>removeRequest(r)}>Delete</button></div></article>):<div className="empty">No trip requests yet.</div>}</div></>}
+    {(tab==="overview"||tab==="stories")&&<><h2>Story moderation <span className="admin-count">{pendingStories.length} waiting</span></h2><div className="admin-list">{stories.length?stories.map(s=><div className="admin-row story-admin-row" key={s.id}><div><b>{s.title}</b><small>{s.author} · {s.status.toUpperCase()} · {s.text}</small></div>{s.status==="pending"?<><button className="approve" onClick={()=>approve(s.id,"approved")}>Approve</button><button className="reject" onClick={()=>approve(s.id,"rejected")}>Reject</button></>:<><button onClick={()=>editStory(s)}>Edit → requests</button><button onClick={()=>sendToRequests(s)}>Send to requests</button><button className="reject" onClick={()=>deleteStory(s)}>Remove</button></>}</div>):<div className="empty">No stories yet.</div>}</div></>}
     {(tab==="overview"||tab==="media")&&<><h2>Memory library</h2><div className="admin-media-grid">{media.map(m=><article className="admin-media-card" key={m.id}>{m.type==="video"?<video src={m.url} controls/>:<img src={m.url} alt={m.title}/>}<b>{m.title}</b><small>{m.trip}</small><div><button onClick={()=>editMedia(m)}>Edit</button><button className="reject" onClick={()=>deleteMedia(m)}>Remove</button></div></article>)}</div><button className="primary" onClick={addMedia}>+ Add photo / video</button></>}
     {(tab==="overview"||tab==="site")&&<><h2>Site controls</h2><div className="site-control-grid"><article><b>Public experience</b><span>Edit trips, completed stories and memories anytime.</span></article><article><b>Moderation</b><span>Edited approved stories return to Requests for another review.</span></article><article><b>Applications</b><span>Approve, reject, reopen or remove trip requests.</span></article><article><b>Content library</b><span>Add, edit or remove photos and videos from the public archive.</span></article></div></>}
   </section>;

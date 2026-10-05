@@ -104,3 +104,25 @@
 .request-details{display:flex;gap:18px;flex-wrap:wrap;margin:16px 0;color:var(--muted);font-size:10px}.request-card>p{color:var(--muted);font-size:12px;line-height:1.6}.request-actions{display:flex;gap:8px}.request-actions button{border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:transparent;color:var(--text)}.request-actions .approve{color:var(--green)}
 @media(max-width:800px){.trip-hero-detail,.team-section{flex-direction:column;align-items:flex-start}.trip-photo-grid{grid-template-columns:1fr 1fr;grid-template-rows:200px 200px}.trip-photo-grid img:first-child{grid-row:auto;grid-column:1/3}.map-tooltip{left:12px;bottom:38px}.map-tools{right:10px}}
 @media(max-width:500px){.trip-photo-grid{grid-template-columns:1fr;grid-template-rows:220px}.trip-photo-grid img:first-child{grid-column:auto}.itinerary-item{grid-template-columns:48px 1fr}.request-card-head{flex-direction:column}}
+
+.admin-hero{display:flex;justify-content:space-between;align-items:end;gap:30px;padding-bottom:34px;border-bottom:1px solid var(--line)}
+.admin-hero h1{max-width:760px;margin-bottom:12px}
+.admin-command{position:sticky;top:76px;z-index:12;display:flex;gap:5px;overflow:auto;padding:9px;margin:20px 0 35px;border:1px solid var(--line);border-radius:15px;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(16px)}
+.admin-command button{white-space:nowrap;border:0;background:transparent;color:var(--muted);padding:10px 13px;border-radius:9px;font-size:11px}
+.admin-command button:hover,.admin-command button.active{background:var(--text);color:var(--bg)}
+.admin-command button b{margin-left:5px;color:var(--orange)}
+.admin-command button.active b{color:inherit}
+.admin-media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:15px}
+.admin-media-card{padding:10px;border:1px solid var(--line);border-radius:15px;background:var(--panel-2);display:grid;gap:7px}
+.admin-media-card img,.admin-media-card video{width:100%;height:160px;object-fit:cover;border-radius:10px}
+.admin-media-card b{font-size:12px}.admin-media-card small{color:var(--muted);font:9px "DM Mono"}
+.admin-media-card>div{display:flex;gap:6px}.admin-media-card button{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px;padding:7px 9px;font-size:10px}
+.site-control-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.site-control-grid article{padding:20px;border:1px solid var(--line);border-radius:15px;background:var(--panel-2)}
+.site-control-grid b,.site-control-grid span{display:block}.site-control-grid b{margin-bottom:8px}.site-control-grid span{color:var(--muted);font-size:11px;line-height:1.6}
+.request-status.approved{color:var(--green);border-color:rgba(56,217,150,.25)}
+.request-status.rejected{color:#ff7f7f;border-color:rgba(255,127,127,.25)}
+.story-admin-row{grid-template-columns:1fr auto auto}
+.story-admin-row small{max-width:700px}
+@media(max-width:900px){.site-control-grid{grid-template-columns:1fr 1fr}.admin-media-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.admin-hero{align-items:flex-start;flex-direction:column}.admin-command{top:64px}.site-control-grid,.admin-media-grid{grid-template-columns:1fr}.story-admin-row{grid-template-columns:1fr}.story-admin-row button{grid-column:auto}}

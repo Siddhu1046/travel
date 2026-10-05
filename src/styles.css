@@ -55,3 +55,29 @@
 .admin-stats div{position:relative;overflow:hidden}
 .admin-stats div:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-35px;top:-35px;background:var(--green);opacity:.07}
 @media(max-width:700px){.theme-toggle{display:block!important}.topbar{flex-wrap:wrap}.topbar nav{max-width:100%;width:100%}}
+
+.site{color:var(--text)}
+.theme-light .hero h1{color:#25312c}
+.theme-light .hero h1 em{color:#66766e}
+.theme-light .hero .eyebrow{color:#167a55}
+.theme-light .map-wrap{border-color:rgba(23,32,29,.13);box-shadow:0 25px 70px rgba(40,45,40,.08)}
+.theme-light .map-wrap:before{background-image:linear-gradient(#173b2a09 1px,transparent 1px),linear-gradient(90deg,#173b2a09 1px,transparent 1px)}
+.theme-light .map-caption{color:#5d6c65}
+.theme-light .marker-label{fill:#26332e;stroke:#dfe8df}
+.theme-light .map-note{color:#53635b}
+.site-footer{margin-top:20px;padding:58px clamp(18px,5vw,70px) 22px;border-top:1px solid var(--line);background:linear-gradient(180deg,transparent,rgba(0,0,0,.025))}
+.theme-dark .site-footer{background:linear-gradient(180deg,transparent,rgba(255,255,255,.015))}
+.footer-main{display:grid;grid-template-columns:2fr 1fr 1.3fr 1.2fr;gap:50px;max-width:1360px;margin:auto}
+.footer-brand{display:flex;gap:15px;align-items:flex-start}
+.footer-brand .brand-mark{flex:0 0 auto}
+.footer-brand strong{font-size:12px;letter-spacing:.14em}
+.footer-brand p{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.7}
+.site-footer h4{font:500 9px "DM Mono";letter-spacing:.16em;color:var(--muted);margin:3px 0 14px}
+.site-footer button,.site-footer a,.site-footer span{display:block;border:0;background:none;color:var(--text);padding:5px 0;text-decoration:none;text-align:left;font-size:11px;opacity:.78}
+.site-footer button:hover,.site-footer a:hover{color:var(--green);opacity:1;transform:translateX(3px)}
+.site-footer span{color:var(--muted);font-size:10px;margin-top:5px}
+.footer-bottom{max-width:1360px;margin:45px auto 0;padding-top:17px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;color:var(--muted);font:8px "DM Mono";letter-spacing:.08em}
+.request-modal{width:min(680px,100%)}
+.request-modal .hero-text{margin-bottom:22px}
+@media(max-width:850px){.footer-main{grid-template-columns:1fr 1fr;gap:30px}.footer-bottom{flex-direction:column}}
+@media(max-width:500px){.footer-main{grid-template-columns:1fr}.footer-bottom{gap:8px}.site-footer{padding-top:40px}}

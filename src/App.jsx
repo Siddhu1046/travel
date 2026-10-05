@@ -113,7 +113,7 @@ export default function App() {
     {page==="trips"&&<TripList trips={trips} counts={counts} filter={filter} setFilter={setFilter} openTrip={openTrip} requests={requests}/>}\n    {page==="calendar"&&<CalendarPage trips={trips} openTrip={openTrip} theme={theme}/>}
     {page==="trip"&&selected&&<TripPage trip={selected} registrations={registrations} requests={requests} name={name} setName={setName} register={()=>register(selected)} back={()=>setPage("trips")}/>}
     {page==="memories"&&<Gallery media={media} role={role} setMedia={setMedia}/>}
-    {page==="stories"&&<Stories stories={stories.filter(s=>s.status==="approved")} story={story} setStory={setStory} submit={submitStory}/>}
+    {page==="stories"&&<Stories stories={stories.filter(s=>s.status==="approved")} story={story} setStory={setStory} submit={submitStory} positions={wallPositions} setPositions={setWallPositions}/>}
     {page==="admin"&&role==="admin"&&<Admin trips={trips} registrations={registrations} stories={stories} onEdit={setDraft} approve={approve} media={media} setMedia={setMedia} setTrips={setTrips} setStories={setStories} requests={requests} reviewRequest={reviewRequest} setRequests={setRequests} onCreate={()=>setNewTripOpen(true)}/>}
     {adminOpen&&<div className="modal-bg"><form className="modal" onSubmit={e=>{e.preventDefault();if(adminPassword==="admin123"){setRole("admin");setPage("admin");setAdminOpen(false);setAdminPassword("");pop("Admin access granted ✓")}else pop("Wrong admin password.")}}><button type="button" className="x" onClick={()=>{setAdminOpen(false);setAdminPassword("")}}>×</button><p className="eyebrow">SECURE AREA</p><h2>Admin login</h2><p className="hero-text">Enter the admin password to open the control center.</p><label>Password<input autoFocus type="password" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)} placeholder="Admin password"/></label><button className="primary">Enter dashboard →</button><small style={{opacity:.55}}>Demo password: admin123</small></form></div>}
     {draft&&<div className="modal-bg"><form className="modal" onSubmit={saveTrip}><button type="button" className="x" onClick={()=>setDraft(null)}>×</button><p className="eyebrow">ADMIN · EDIT TRIP</p><h2>{draft.name}</h2><label>Name<input name="name" defaultValue={draft.name}/></label><label>Place<input name="place" defaultValue={draft.place}/></label><div className="two"><label>Status<select name="status" defaultValue={draft.status}><option value="completed">Completed</option><option value="upcoming">Upcoming</option><option value="wishlist">Wishlist</option></select></label><label>Capacity<input name="capacity" type="number" defaultValue={draft.capacity}/></label></div><div className="two"><label>Start<input name="startDate" type="date" defaultValue={draft.startDate}/></label><label>End<input name="endDate" type="date" defaultValue={draft.endDate}/></label></div><label>Budget ₹<input name="budget" type="number" defaultValue={draft.budget}/></label><label>Summary<textarea name="summary" defaultValue={draft.summary}/></label><label>Experience / story<textarea name="experience" defaultValue={draft.experience||""} placeholder="What happened on this trip?"/></label><ItineraryEditor initial={draft.itinerary||[{day:"01",title:"Arrival",text:"Start the journey."},{day:"02",title:"Explore",text:"Main experiences."},{day:"03",title:"Return",text:"Final memories and journey home."}]} /><label>Gallery URLs <small>one URL per line</small><textarea name="gallery" defaultValue={(draft.gallery||[]).join("\n")} placeholder="https://..."/></label><label>Possible dates <small>one date per line — useful for wishlist planning</small><textarea name="possibleDates" defaultValue={(draft.possibleDates||[]).join("\n")} placeholder="2026-12-12\n2027-01-09"/></label><button className="primary">Save trip</button></form></div>}
@@ -213,7 +213,7 @@ function TripMemoryStrip({trip}) {
 
 function Gallery({media,role,setMedia}) { const add=()=>{if(role!=="admin")return;const url=prompt("Paste image/video URL");if(url)setMedia([{id:Date.now(),type:/mp4|webm/i.test(url)?"video":"photo",title:"New memory",trip:"Our journey",url},...media]);};return <section className="page"><div className="page-head"><div><p className="eyebrow">OUR ARCHIVE</p><h1>Memories</h1><p className="hero-text">Photos, videos and moments we never want to forget.</p></div>{role==="admin"&&<button className="primary" onClick={add}>+ Add media</button>}</div><div className="gallery">{media.map(m=><article className="memory" key={m.id}>{m.type==="video"?<video src={m.url} controls/>:<img src={m.url} alt={m.title}/>}<div><b>{m.title}</b><span>{m.trip}</span></div></article>)}</div></section>; }
 
-function Stories({stories,story,setStory,submit,positions,setPositions}) {
+function Stories({stories,story,setStory,submit,positions={},setPositions=()=>{}}) {
   const wallRef=useRef(null);
   const [zoom,setZoom]=useState(1);
   const [pan,setPan]=useState({x:0,y:0});
@@ -222,7 +222,7 @@ function Stories({stories,story,setStory,submit,positions,setPositions}) {
   const [openNote,setOpenNote]=useState(null);
 
   useEffect(()=>{
-    const next={...positions};
+    const next={...(positions||{})};
     let changed=false;
     stories.forEach((s,i)=>{
       if(!next[s.id]){
@@ -266,13 +266,13 @@ function Stories({stories,story,setStory,submit,positions,setPositions}) {
     if(!dragging)return;
     const dx=(e.clientX-dragging.sx)/zoom;
     const dy=(e.clientY-dragging.sy)/zoom;
-    setPositions({...positions,[dragging.id]:{...positions[dragging.id],x:dragging.px+dx,y:dragging.py+dy}});
+    setPositions({...((positions)||{}),[dragging.id]:{...((positions||{})[dragging.id]||{rotation:0,size:1}),x:dragging.px+dx,y:dragging.py+dy}});
   };
   const stopNote=()=>setDragging(null);
 
   const resetWall=()=>{setZoom(1);setPan({x:0,y:0});};
   const noteStyle=(s)=>{
-    const p=positions[s.id]||{x:0,y:0,rotation:0,size:1};
+    const p=(positions||{})[s.id]||{x:0,y:0,rotation:0,size:1};
     return {transform:`translate3d(calc(-50% + ${p.x}px), calc(-50% + ${p.y}px), 0) rotate(${p.rotation}deg) scale(${p.size})`};
   };
 

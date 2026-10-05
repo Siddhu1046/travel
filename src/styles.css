@@ -174,3 +174,10 @@
 .theme-light .memory-wall{box-shadow:0 30px 90px rgba(40,35,25,.14)}
 @media(max-width:850px){.wall-heading{align-items:flex-start;flex-direction:column}.memory-wall{min-height:480px;height:65vh}.write-wall{grid-template-columns:1fr;gap:25px;padding:28px}}
 @media(max-width:550px){.memory-wall{min-height:450px;border-radius:20px}.memory-note{width:190px!important;min-height:165px!important;padding:25px 15px 15px}.memory-note h2{font-size:18px}.memory-note p{font-size:12px}.wall-help{font-size:7px;max-width:90%;text-align:center}.write-wall{margin-top:35px}.wall-controls{width:100%;justify-content:space-between}}
+
+.admin-wall-panel{margin:24px 0 40px;padding:24px;border:1px solid rgba(255,255,255,.1);border-radius:24px;background:rgba(255,255,255,.025)}
+.admin-wall-panel .memory-wall-page{padding:0}
+.admin-wall-panel .wall-heading{margin-bottom:16px}
+.admin-wall-panel .write-wall{display:none}
+.note-actions{display:flex;gap:6px;margin-top:10px;position:relative;z-index:4}
+.note-actions button{border:0;border-radius:8px;padding:5px 9px;background:rgba(0,0,0,.16);color:inherit;font-size:11px;cursor:pointer}

@@ -181,3 +181,19 @@
 .admin-wall-panel .write-wall{display:none}
 .note-actions{display:flex;gap:6px;margin-top:10px;position:relative;z-index:4}
 .note-actions button{border:0;border-radius:8px;padding:5px 9px;background:rgba(0,0,0,.16);color:inherit;font-size:11px;cursor:pointer}
+
+.admin-activity-sidebar{position:fixed;right:18px;top:92px;width:280px;max-height:calc(100vh - 112px);z-index:20;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:rgba(15,17,22,.94);backdrop-filter:blur(18px);box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+.admin-activity-sidebar.collapsed{width:48px;height:48px}
+.sidebar-toggle{position:absolute;right:8px;top:8px;border:0;background:rgba(255,255,255,.08);color:inherit;border-radius:8px;width:30px;height:30px;cursor:pointer;z-index:2}
+.activity-head{display:flex;justify-content:space-between;padding:18px 48px 14px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;letter-spacing:.12em}
+.activity-head span,.activity-badge{display:grid;place-items:center;min-width:24px;height:24px;border-radius:50%;background:#ff5f6d;color:#fff;font-size:11px;font-weight:800}
+.activity-list{padding:8px;overflow:auto;max-height:calc(100vh - 175px)}
+.activity-item{display:flex;gap:10px;padding:11px 8px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;line-height:1.4}
+.activity-item i{font-style:normal}
+.activity-badge{margin:12px auto}
+.status-chip{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.memory-note{z-index:2}
+.wall-center-label{z-index:1}
+.memory-note:first-of-type{z-index:3}
+.wall-form select{width:100%;margin-bottom:10px}
+@media(max-width:900px){.admin-activity-sidebar{right:10px;top:76px;width:250px}.admin-page{padding-right:0}}

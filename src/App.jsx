@@ -46,11 +46,11 @@ export default function App() {
   const [filter,setFilter] = useState("all");
   const [toast,setToast] = useState("");
   const [name,setName] = useState("");
-  const [draft,setDraft] = useState(null);
+  const [draft,setDraft] = useState(null);\n  const [alertsOpen,setAlertsOpen] = useState(true);
   const [story,setStory] = useState({title:"",text:""});
   const counts = useMemo(() => trips.reduce((a,t)=>({...a,[t.status]:a[t.status]+1}),{completed:0,upcoming:0,wishlist:0}),[trips]);
   const upcoming = trips.filter(t=>t.status==="upcoming"&&t.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate));
-  const nearest = upcoming[0];
+  const nearest = upcoming[0];\n  const soon = upcoming.filter(t => daysUntil(t.startDate) <= 30);
   const pop = m => { setToast(m); setTimeout(()=>setToast(""),3000); };
   const openTrip = t => { setSelected(t); setPage("trip"); };
   const register = t => {
@@ -78,7 +78,7 @@ export default function App() {
       <button className="brand" onClick={()=>setPage("home")}><span className="brand-mark">S×M</span><span><strong>OUR JOURNEY</strong><small>Siddhu × Mani</small></span></button>
       <nav>{["home","trips","memories","stories"].map(p=><button className={page===p?"active":""} onClick={()=>setPage(p)} key={p}>{p}</button>)}{role==="admin"&&<button className={page==="admin"?"active admin":""} onClick={()=>setPage("admin")}>Admin</button>}<button className="role" onClick={()=>{const n=role==="user"?"admin":"user";setRole(n);setPage(n==="admin"?"admin":"home")}}>{role==="user"?"Admin mode":"User mode"}</button></nav>
     </header>
-    {toast&&<div className="toast">{toast}</div>}
+    {toast&&<div className="toast">{toast}</div>}\n    {alertsOpen && soon.length>0 && <div className="alert-bg"><div className="alert-box"><button className="x" onClick={()=>setAlertsOpen(false)}>×</button><p className="eyebrow">TRIP ALERT</p><h2>Your next adventure is getting close.</h2>{soon.map(t=><button className="alert-trip" key={t.id} onClick={()=>{setAlertsOpen(false);openTrip(t)}}><span>{t.icon}</span><b>{t.name}</b><small>{daysUntil(t.startDate)} days · ₹{t.budget.toLocaleString("en-IN")} · {(registrations[t.id]||t.members).length}/{t.capacity} going</small></button>)}</div></div>}
     {page==="home"&&<Home trips={trips} counts={counts} filter={filter} setFilter={setFilter} openTrip={openTrip} nearest={nearest} registrations={registrations}/>}
     {page==="trips"&&<TripList trips={trips} counts={counts} filter={filter} setFilter={setFilter} openTrip={openTrip}/>}
     {page==="trip"&&selected&&<TripPage trip={selected} registrations={registrations} name={name} setName={setName} register={()=>register(selected)} back={()=>setPage("trips")}/>}

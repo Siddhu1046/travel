@@ -43,7 +43,7 @@ export default function App() {
   const [requests,setRequests] = useStore("travel-requests",[]);
   const [page,setPage] = useStore("travel-page","home");
   const [role,setRole] = useStore("travel-role","user");
-  const [selected,setSelected] = useState(INITIAL_TRIPS[3]);
+  const [selected,setSelected] = useStore("travel-selected",INITIAL_TRIPS[3]);
   const [filter,setFilter] = useState("all");
   const [toast,setToast] = useState("");
   const [name,setName] = useState("");

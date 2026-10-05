@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { ComposableMap, Geographies, Geography, Marker, Line, ZoomableGroup } from "react-simple-maps";
 import world from "world-atlas/countries-110m.json";
 
@@ -41,6 +41,7 @@ export default function App() {
   const [media,setMedia] = useStore("travel-media",INITIAL_MEDIA);
   const [registrations,setRegistrations] = useStore("travel-registrations",{});
   const [requests,setRequests] = useStore("travel-requests",[]);
+  const [wallPositions,setWallPositions] = useStore("travel-wall-positions",{});
   const [page,setPage] = useStore("travel-page","home");
   const [role,setRole] = useStore("travel-role","user");
   const [selected,setSelected] = useStore("travel-selected",INITIAL_TRIPS[3]);
@@ -212,7 +213,145 @@ function TripMemoryStrip({trip}) {
 
 function Gallery({media,role,setMedia}) { const add=()=>{if(role!=="admin")return;const url=prompt("Paste image/video URL");if(url)setMedia([{id:Date.now(),type:/mp4|webm/i.test(url)?"video":"photo",title:"New memory",trip:"Our journey",url},...media]);};return <section className="page"><div className="page-head"><div><p className="eyebrow">OUR ARCHIVE</p><h1>Memories</h1><p className="hero-text">Photos, videos and moments we never want to forget.</p></div>{role==="admin"&&<button className="primary" onClick={add}>+ Add media</button>}</div><div className="gallery">{media.map(m=><article className="memory" key={m.id}>{m.type==="video"?<video src={m.url} controls/>:<img src={m.url} alt={m.title}/>}<div><b>{m.title}</b><span>{m.trip}</span></div></article>)}</div></section>; }
 
-function Stories({stories,story,setStory,submit}) { return <section className="page"><p className="eyebrow">FROM THE CREW</p><h1>Stories & experiences</h1><p className="hero-text">Anyone can write. Admin approval keeps the public wall clean.</p><form className="story-form" onSubmit={submit}><input placeholder="Story title" value={story.title} onChange={e=>setStory({...story,title:e.target.value})}/><textarea placeholder="Tell us what happened..." value={story.text} onChange={e=>setStory({...story,text:e.target.value})}/><button className="primary">Submit for approval →</button></form><div className="stories">{stories.map(s=><article className="story" key={s.id}><small>{s.author} · {dateText(s.date)}</small><h2>{s.title}</h2><p>{s.text}</p></article>)}</div></section>; }
+function Stories({stories,story,setStory,submit,positions,setPositions}) {
+  const wallRef=useRef(null);
+  const [zoom,setZoom]=useState(1);
+  const [pan,setPan]=useState({x:0,y:0});
+  const [dragging,setDragging]=useState(null);
+  const [movingWall,setMovingWall]=useState(null);
+  const [openNote,setOpenNote]=useState(null);
+
+  useEffect(()=>{
+    const next={...positions};
+    let changed=false;
+    stories.forEach((s,i)=>{
+      if(!next[s.id]){
+        const angle=(i%7)*0.72;
+        const ring=Math.floor(i/7);
+        next[s.id]={
+          x:Math.cos(angle)*(90+ring*135)+(i%2)*35,
+          y:Math.sin(angle)*(70+ring*110)+(i%3)*24,
+          rotation:-5+(i*7)%11,
+          size:1+(i%3)*0.04
+        };
+        changed=true;
+      }
+    });
+    if(changed)setPositions(next);
+  },[stories,positions,setPositions]);
+
+  const clampZoom=z=>Math.min(2.2,Math.max(.55,z));
+  const zoomAt=(delta)=>{
+    const next=clampZoom(zoom+delta);
+    setZoom(next);
+  };
+  const onWallPointerDown=e=>{
+    if(e.target.closest(".memory-note"))return;
+    setMovingWall({sx:e.clientX,sy:e.clientY,px:pan.x,py:pan.y});
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onWallPointerMove=e=>{
+    if(!movingWall)return;
+    setPan({x:movingWall.px+(e.clientX-movingWall.sx),y:movingWall.py+(e.clientY-movingWall.sy)});
+  };
+  const onWallPointerUp=()=>setMovingWall(null);
+
+  const startNoteDrag=(e,s)=>{
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const p=positions[s.id]||{x:0,y:0};
+    setDragging({id:s.id,sx:e.clientX,sy:e.clientY,px:p.x,py:p.y});
+  };
+  const moveNote=e=>{
+    if(!dragging)return;
+    const dx=(e.clientX-dragging.sx)/zoom;
+    const dy=(e.clientY-dragging.sy)/zoom;
+    setPositions({...positions,[dragging.id]:{...positions[dragging.id],x:dragging.px+dx,y:dragging.py+dy}});
+  };
+  const stopNote=()=>setDragging(null);
+
+  const resetWall=()=>{setZoom(1);setPan({x:0,y:0});};
+  const noteStyle=(s)=>{
+    const p=positions[s.id]||{x:0,y:0,rotation:0,size:1};
+    return {transform:`translate3d(calc(-50% + ${p.x}px), calc(-50% + ${p.y}px), 0) rotate(${p.rotation}deg) scale(${p.size})`};
+  };
+
+  return <section className="page memory-wall-page">
+    <div className="wall-heading">
+      <div>
+        <p className="eyebrow">FROM THE CREW · MEMORY WALL</p>
+        <h1>Leave something behind.</h1>
+        <p className="hero-text">Every trip leaves a story. Drag the notes around, explore the wall and add your own memory.</p>
+      </div>
+      <div className="wall-controls">
+        <button onClick={()=>zoomAt(.15)}>+</button>
+        <button onClick={()=>zoomAt(-.15)}>−</button>
+        <button onClick={resetWall}>◎ Reset</button>
+        <span>{Math.round(zoom*100)}%</span>
+      </div>
+    </div>
+
+    <div
+      ref={wallRef}
+      className="memory-wall"
+      onPointerDown={onWallPointerDown}
+      onPointerMove={onWallPointerMove}
+      onPointerUp={onWallPointerUp}
+      onPointerCancel={onWallPointerUp}
+      style={{cursor:movingWall?"grabbing":"grab"}}
+    >
+      <div className="wall-paper" style={{transform:`translate3d(${pan.x}px,${pan.y}px,0) scale(${zoom})`}}>
+        <div className="wall-center-label">OUR MEMORIES · SIDDHU × MANI</div>
+        {stories.map((s,i)=>{
+          const colors=["yellow","cream","green","pink","blue"];
+          return <article
+            className={`memory-note ${colors[i%colors.length]} ${openNote===s.id?"selected":""}`}
+            key={s.id}
+            style={noteStyle(s)}
+            onPointerDown={e=>startNoteDrag(e,s)}
+            onPointerMove={moveNote}
+            onPointerUp={stopNote}
+            onDoubleClick={e=>{e.stopPropagation();setOpenNote(openNote===s.id?null:s.id)}}
+          >
+            <span className="note-pin">✦</span>
+            <small>{s.author} · {dateText(s.date)}</small>
+            <h2>{s.title}</h2>
+            <p>{s.text}</p>
+            <em>double click to read</em>
+          </article>
+        })}
+        {!stories.length&&<div className="empty-wall"><b>The wall is waiting.</b><span>Be the first person to leave a memory.</span></div>}
+      </div>
+      <div className="wall-help">DRAG THE WALL · DRAG NOTES · DOUBLE-CLICK A NOTE · ZOOM TO EXPLORE</div>
+    </div>
+
+    <div className="write-wall">
+      <div>
+        <p className="eyebrow">WRITE ON THE WALL</p>
+        <h2>Your memory belongs here.</h2>
+        <p>Write something from a trip, a person, a place or a moment you never want to forget. Admin approval keeps the public wall clean.</p>
+      </div>
+      <form className="story-form wall-form" onSubmit={submit}>
+        <input placeholder="Give your memory a title" value={story.title} onChange={e=>setStory({...story,title:e.target.value})}/>
+        <textarea placeholder="What happened? Tell the story..." value={story.text} onChange={e=>setStory({...story,text:e.target.value})}/>
+        <button className="primary">Pin my memory →</button>
+      </form>
+    </div>
+
+    {openNote&&(()=>{
+      const s=stories.find(x=>x.id===openNote);
+      if(!s)return null;
+      return <div className="note-reader" onClick={()=>setOpenNote(null)}>
+        <article className="note-reader-card" onClick={e=>e.stopPropagation()}>
+          <button className="x" onClick={()=>setOpenNote(null)}>×</button>
+          <small>{s.author} · {dateText(s.date)}</small>
+          <h2>{s.title}</h2>
+          <p>{s.text}</p>
+        </article>
+      </div>;
+    })()}
+  </section>;
+}
 
 function Admin({trips,registrations,stories,onEdit,approve,media,setMedia,setTrips,setStories,requests,reviewRequest,setRequests,onCreate}) {
   const [tab,setTab]=useState("overview");

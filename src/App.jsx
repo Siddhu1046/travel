@@ -301,7 +301,7 @@ function Stories({trips=[],stories,story,setStory,submit,positions={},setPositio
     if(!dragging)return;
     const dx=(e.clientX-dragging.sx)/zoom;
     const dy=(e.clientY-dragging.sy)/zoom;
-    setPositions({...((positions)||{}),[dragging.id]:{...((positions||{})[dragging.id]||{rotation:0,size:1}),x:dragging.px+dx,y:dragging.py+dy}});
+    setPositions(prev=>({...((prev)||{}),[dragging.id]:{...(((prev||{})[dragging.id])||{rotation:0,size:1}),x:dragging.px+dx,y:dragging.py+dy}}));
   };
   const stopNote=()=>setDragging(null);
 

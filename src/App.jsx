@@ -265,10 +265,6 @@ function Stories({stories,story,setStory,submit,positions={},setPositions=()=>{}
           size:1+(i%3)*0.04
           };
         }
-        if(i===0){} else {
-          rotation:-5+(i*7)%11,
-          size:1+(i%3)*0.04
-        };
         changed=true;
       }
     });

@@ -46,7 +46,8 @@ export default function App() {
   const [filter,setFilter] = useState("all");
   const [toast,setToast] = useState("");
   const [name,setName] = useState("");
-  const [draft,setDraft] = useState(null);\n  const [alertsOpen,setAlertsOpen] = useState(true);
+  const [draft,setDraft] = useState(null);
+  const [alertsOpen,setAlertsOpen] = useState(true);
   const [story,setStory] = useState({title:"",text:""});
   const counts = useMemo(() => trips.reduce((a,t)=>({...a,[t.status]:a[t.status]+1}),{completed:0,upcoming:0,wishlist:0}),[trips]);
   const upcoming = trips.filter(t=>t.status==="upcoming"&&t.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate));

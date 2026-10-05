@@ -51,7 +51,8 @@ export default function App() {
   const [story,setStory] = useState({title:"",text:""});
   const counts = useMemo(() => trips.reduce((a,t)=>({...a,[t.status]:a[t.status]+1}),{completed:0,upcoming:0,wishlist:0}),[trips]);
   const upcoming = trips.filter(t=>t.status==="upcoming"&&t.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate));
-  const nearest = upcoming[0];\n  const soon = upcoming.filter(t => daysUntil(t.startDate) <= 30);
+  const nearest = upcoming[0];
+  const soon = upcoming.filter(t => daysUntil(t.startDate) <= 30);
   const pop = m => { setToast(m); setTimeout(()=>setToast(""),3000); };
   const openTrip = t => { setSelected(t); setPage("trip"); };
   const register = t => {

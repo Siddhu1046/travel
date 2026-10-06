@@ -334,7 +334,7 @@ function CalendarPage({trips,openTrip,theme}) {
   
     </div>
     <div className="calendar-jump">
-      <span>JUMP TO DATE</span><input type="date" value={jumpDate} onChange={e=>setJumpDate(e.target.value)} aria-label="Jump to a date"/><button type="button" onClick={applyJump}>Go →</button><button type="button" className="today-btn" onClick={goToday}>Today</button>
+      <button type="button" className="calendar-month-arrow" onClick={()=>changeMonth(-1)} aria-label="Previous month">←</button><span>JUMP TO DATE</span><input type="date" value={jumpDate} onChange={e=>setJumpDate(e.target.value)} aria-label="Jump to a date"/><button type="button" onClick={applyJump}>Go →</button><button type="button" className="today-btn" onClick={goToday}>Today</button><button type="button" className="calendar-month-arrow" onClick={()=>changeMonth(1)} aria-label="Next month">→</button>
     </div>
     <div className="calendar-legend"><span><i className="cal-dot completed"/>Completed</span><span><i className="cal-dot upcoming"/>Upcoming</span><span><i className="cal-dot wishlist"/>Possible date</span></div>
     <div className="calendar-grid">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}{cells.map((d,i)=><div className={"calendar-cell "+(!d?"empty-cell":"")} key={i}>{d&&<><b>{d}</b>{byDay(d).map((e,j)=><button key={j} className={"calendar-event "+(e.possible?"possible":effectiveStatus(e.trip))} onClick={()=>openTrip(e.trip)}><span>{e.trip.icon}</span>{e.trip.name}</button>)}</>}</div>)}</div>

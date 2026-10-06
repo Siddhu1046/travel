@@ -901,3 +901,15 @@
 .theme-light .wall-form select option{background:#fffdf8;color:#17201d}
 .write-wall .eyebrow{margin-bottom:10px}
 .write-wall .primary{min-height:46px}
+
+
+/* Final memory wall stacking fix: keep the paper and notes above the wall overlays */
+.memory-wall:before{z-index:1!important}
+.memory-wall:after{z-index:2!important}
+.memory-wall .wall-paper{z-index:3!important}
+.memory-wall .wall-center-label{z-index:4!important}
+.memory-wall .wall-paper .memory-note{z-index:5!important;visibility:visible!important;opacity:1!important}
+.memory-wall .wall-paper .memory-note:hover,
+.memory-wall .wall-paper .memory-note.selected{z-index:30!important}
+.memory-wall .wall-paper .memory-note .note-pin,
+.memory-wall .wall-paper .memory-note .note-actions{position:relative;z-index:6}

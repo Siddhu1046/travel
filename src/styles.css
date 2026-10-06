@@ -229,13 +229,15 @@
 }
 .theme-light.site::before{
   background-image:
-    linear-gradient(180deg,rgba(238,246,250,.42),rgba(245,247,242,.58) 52%,rgba(240,238,230,.78)),
+    linear-gradient(180deg,rgba(218,237,246,.18),rgba(240,247,245,.20) 48%,rgba(234,232,224,.34)),
     url("https://images.pexels.com/photos/36721865/pexels-photo-36721865.jpeg?auto=compress&cs=tinysrgb&w=2400");
-  filter:saturate(.88) contrast(.96);
-  opacity:.82;
+  filter:saturate(1.02) contrast(1.04) brightness(.98);
+  opacity:1;
 }
 .theme-light.site::after{
-  background:rgba(244,247,244,.38);
+  background:rgba(244,247,244,.10);
+  backdrop-filter:saturate(1.06);
+  -webkit-backdrop-filter:saturate(1.06);
 }
 .theme-dark.site::before{
   background-image:
@@ -299,7 +301,7 @@
   backdrop-filter:blur(22px) saturate(1.22);
   -webkit-backdrop-filter:blur(22px) saturate(1.22);
 }
-.theme-light .topbar{background:rgba(248,250,247,.62)}
+.theme-light .topbar{background:rgba(248,250,247,.46);border-bottom-color:rgba(255,255,255,.62)}
 .theme-dark .topbar{background:rgba(4,9,14,.62)}
 .theme-light .map-wrap,.theme-dark .map-wrap{
   overflow:hidden;
@@ -467,3 +469,24 @@
   .map-switch{left:10px;top:48px}
   .map-switch button{padding:6px 8px;font-size:8px}
 }
+
+/* Final glass polish — stronger light-mode atmosphere, readable activity rail, and glassy interactions */
+.theme-light .admin-activity-sidebar{background:rgba(248,252,250,.58);color:#17231f;border-color:rgba(255,255,255,.82);box-shadow:0 24px 70px rgba(49,70,61,.16),inset 0 1px 0 rgba(255,255,255,.88);backdrop-filter:blur(28px) saturate(1.25);-webkit-backdrop-filter:blur(28px) saturate(1.25)}
+.theme-light .admin-activity-sidebar .activity-head{border-bottom-color:rgba(23,35,31,.10)}
+.theme-light .admin-activity-sidebar .activity-item{border-bottom-color:rgba(23,35,31,.07);color:#30403a}
+.theme-light .admin-activity-sidebar .sidebar-toggle{background:rgba(255,255,255,.46);color:#20302a;border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 20px rgba(40,55,48,.10),inset 0 1px 0 rgba(255,255,255,.75);backdrop-filter:blur(14px)}
+.theme-light .admin-activity-sidebar .activity-badge{box-shadow:0 8px 25px rgba(255,95,109,.28),0 0 0 5px rgba(255,255,255,.34)}
+.theme-light .admin-command,.theme-light .admin-wall-panel,.theme-light .admin-page .admin-row,.theme-light .admin-page .request-card,.theme-light .admin-page .admin-media-card,.theme-light .admin-page .admin-stats div,.theme-light .admin-page .site-control-grid article{background:rgba(255,255,255,.34);border-color:rgba(255,255,255,.70);box-shadow:0 16px 55px rgba(57,72,65,.10),inset 0 1px 0 rgba(255,255,255,.72);backdrop-filter:blur(20px) saturate(1.18);-webkit-backdrop-filter:blur(20px) saturate(1.18)}
+.theme-light .admin-page .admin-row:hover,.theme-light .admin-page .request-card:hover,.theme-light .admin-page .admin-media-card:hover,.theme-light .admin-command button:hover{background:rgba(255,255,255,.54);border-color:rgba(22,122,85,.24);box-shadow:0 20px 60px rgba(57,72,65,.14),inset 0 1px 0 rgba(255,255,255,.88);transform:translateY(-1px)}
+.theme-light .admin-command{position:sticky;top:82px;z-index:12}
+.theme-light .admin-command button{transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .22s ease}
+.theme-light button,.theme-light a,.theme-light input,.theme-light textarea,.theme-light select{transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .22s ease,filter .22s ease}
+.theme-light button:not(.brand):not(.sidebar-toggle):hover{filter:saturate(1.08)}
+.theme-light .primary:hover,.theme-light .legend-item:hover,.theme-light .theme-toggle:hover,.theme-light .role:hover{box-shadow:0 12px 32px rgba(22,122,85,.16),inset 0 1px 0 rgba(255,255,255,.62)}
+.theme-light input:focus,.theme-light textarea:focus,.theme-light select:focus{outline:none;border-color:rgba(22,122,85,.38);box-shadow:0 0 0 4px rgba(22,122,85,.08),0 12px 35px rgba(53,75,65,.10);background:rgba(255,255,255,.68)}
+.theme-light .map-tools,.theme-light .map-switch,.theme-light .wall-controls,.theme-light .toast,.theme-light .alert-box,.theme-light .modal,.theme-light .countdown{background:rgba(255,255,255,.46);border-color:rgba(255,255,255,.76);box-shadow:0 18px 55px rgba(50,65,58,.13),inset 0 1px 0 rgba(255,255,255,.82);backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2)}
+.theme-light .map-tools button:hover,.theme-light .map-switch button:hover,.theme-light .wall-controls button:hover{background:rgba(255,255,255,.62);box-shadow:inset 0 1px 0 rgba(255,255,255,.78)}
+.theme-light .map-wrap{background:rgba(255,255,255,.20)}
+.theme-light .hero-copy{text-shadow:0 1px 20px rgba(255,255,255,.42)}
+.theme-light .site-footer{background:rgba(255,255,255,.28);border-top:1px solid rgba(255,255,255,.55)}
+@media(max-width:900px){.theme-light .admin-command{top:70px}}

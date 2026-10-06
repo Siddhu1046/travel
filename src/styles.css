@@ -748,3 +748,49 @@
   line-height:1.5;
   opacity:.55;
 }
+
+
+/* Trip registration layout fix */
+.register-card{
+  width:100%;
+  min-width:0;
+}
+.register-card>div{
+  min-width:240px;
+  flex:1 1 280px;
+}
+.register-form{
+  flex:1 1 760px;
+  min-width:0;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  align-items:stretch;
+}
+.register-form input,
+.register-form textarea{
+  width:100%;
+  min-width:0;
+}
+.register-form textarea{
+  min-height:46px;
+  resize:vertical;
+  grid-column:span 2;
+}
+.register-form .primary{
+  min-width:0;
+  white-space:nowrap;
+}
+@media(max-width:1200px){
+  .register-card{align-items:stretch}
+  .register-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .register-form textarea{grid-column:span 2}
+}
+@media(max-width:700px){
+  .register-card{width:100%;overflow:hidden}
+  .register-card>div{width:100%;min-width:0}
+  .register-form{width:100%;grid-template-columns:1fr}
+  .register-form textarea{grid-column:auto}
+  .register-form .primary{width:100%}
+  .topbar nav .role{display:inline-flex}
+}

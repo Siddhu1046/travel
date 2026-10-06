@@ -432,3 +432,38 @@
   .map-popup h3{font-size:18px}
   .map-note{max-width:calc(100% - 20px);line-height:1.5}
 }
+
+/* India / World map switcher */
+.map-switch{
+  position:absolute;
+  z-index:9;
+  left:18px;
+  top:52px;
+  display:flex;
+  gap:4px;
+  padding:4px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:12px;
+  background:rgba(8,15,20,.55);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.map-switch button{
+  border:0;
+  border-radius:8px;
+  padding:7px 10px;
+  background:transparent;
+  color:#c5d0cb;
+  font:9px "DM Mono";
+  cursor:pointer;
+}
+.map-switch button.active{background:rgba(110,231,183,.15);color:#6ee7b7}
+.theme-light .map-switch{background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.75)}
+.theme-light .map-switch button{color:#53625c}
+.theme-light .map-switch button.active{background:rgba(22,122,85,.1);color:#167a55}
+.world-country{transition:fill .18s ease}
+.world-country:hover{filter:brightness(1.07)}
+@media(max-width:700px){
+  .map-switch{left:10px;top:48px}
+  .map-switch button{padding:6px 8px;font-size:8px}
+}

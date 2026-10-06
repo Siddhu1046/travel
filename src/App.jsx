@@ -157,15 +157,15 @@ function Map({trips,filter,openTrip,theme}) {
   const shown=trips.filter(t=>filter==="all"||effectiveStatus(t)===filter);
   const light=theme==="light";
   const [zoom,setZoom]=useState(1);
-  const [center,setCenter]=useState([78.5,21.5]);
+  const [center,setCenter]=useState([79,23.5]);
   const [hovered,setHovered]=useState(null);
   return <div className="map-wrap">
     <div className="map-caption"><span>INDIA · INTERACTIVE TRAVEL MAP</span><span>DRAG · SCROLL · CLICK</span></div>
-    <div className="map-tools"><button onClick={()=>setZoom(z=>Math.min(2.2,z+.2))}>+</button><button onClick={()=>setZoom(z=>Math.max(1,z-.2))}>−</button><button onClick={()=>{setZoom(1);setCenter([78.5,21.5])}}>Reset</button></div>
+    <div className="map-tools"><button onClick={()=>setZoom(z=>Math.min(7,z+.3))}>+</button><button onClick={()=>setZoom(z=>Math.max(.85,z-.3))}>−</button><button onClick={()=>{setZoom(1);setCenter([79,23.5])}}>Reset</button></div>
     {hovered&&<div className="map-tooltip"><span>{hovered.icon}</span><div><b>{hovered.name}</b><small>{STATUS[effectiveStatus(hovered)].label} · {hovered.place}</small></div></div>}
-    <ComposableMap projection="geoMercator" className="map" preserveAspectRatio="xMidYMid meet">
-      <ZoomableGroup center={center} zoom={zoom} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}} minZoom={1} maxZoom={2.4}>
-        <Geographies geography={world}>{({geographies})=>geographies.map(g=><Geography key={g.rsmKey} geography={g} fill={g.properties?.name==="India"?(light?"#dfe8df":"#dbe6e0"):(light?"#f4f0e6":"#142131")} stroke={g.properties?.name==="India"?(light?"#71877b":"#849b90"):(light?"#d8d3c7":"#26384a")} strokeWidth={g.properties?.name==="India" ? .75 : .3} style={{default:{outline:"none"},hover:{outline:"none",fill:g.properties?.name==="India"?(light?"#d4e0d6":"#e2ebe5"):(light?"#eee9de":"#1a2b3c")},pressed:{outline:"none"}}}/>)}</Geographies>
+    <ComposableMap projection="geoMercator" projectionConfig={{scale:820,center:[79,24]}} className="map" preserveAspectRatio="xMidYMid meet">
+      <ZoomableGroup center={center} zoom={zoom} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}} minZoom={0.85} maxZoom={7}>
+        <Geographies geography="https://raw.githubusercontent.com/srisbalyan/India-Administrative-Maps/main/india_topo_states.json">{({geographies})=>geographies.map(g=>{const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");const isJk=/Jammu|Kashmir/i.test(name);const isLadakh=/Ladakh/i.test(name);const isTrip=shown.some(t=>t.place?.toLowerCase().includes(name.toLowerCase()));return <Geography key={g.rsmKey} geography={g} fill={isJk||isLadakh?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")} stroke={light?"#71877b":"#6e8579"} strokeWidth={isJk||isLadakh?1.05:.7} style={{default:{outline:"none"},hover:{outline:"none",fill:light?"#d2e2d6":"#29463c"},pressed:{outline:"none"}}}/>})}</Geographies>
         <Line from={route[0]} to={route[1]} stroke="#6b8579" strokeWidth={1.2} strokeDasharray="4 5"/>
         <Line from={route[1]} to={route[2]} stroke="#6b8579" strokeWidth={1.2} strokeDasharray="4 5"/>
         {shown.map(t=>{const s=STATUS[effectiveStatus(t)];return <Marker key={t.id} coordinates={t.coords} onClick={()=>openTrip(t)} onMouseEnter={()=>setHovered(t)} onMouseLeave={()=>setHovered(null)}>
@@ -173,7 +173,7 @@ function Map({trips,filter,openTrip,theme}) {
         </Marker>})}
       </ZoomableGroup>
     </ComposableMap>
-    <div className="map-note">🟢 completed · 🟠 upcoming · 🟣 wishlist · scroll to explore</div>
+    <div className="map-note">🟢 completed · 🟠 upcoming · 🟣 wishlist · 🔵 ongoing · scroll / pinch / drag to explore</div>
   </div>;
 }
 
@@ -181,7 +181,24 @@ function Home({trips,counts,filter,setFilter,openTrip,nearest,registrations,requ
   return <section><div className="hero"><div className="hero-copy"><p className="eyebrow">A living map of where we've been & where we're going</p><h1>Every trip gets a<br/><em>place on the map.</em></h1><p className="hero-text">Trips, people, budgets, stories and memories — one shared travel space.</p><div className="legend">{Object.entries(STATUS).map(([k,s])=><button key={k} className={filter===k?"legend-item active":"legend-item"} onClick={()=>setFilter(filter===k?"all":k)}><i style={{"--dot":s.color}}/>{s.label}<b>{counts[k]}</b></button>)}</div></div><Map trips={trips} filter={filter} openTrip={openTrip} theme={theme}/></div>{nearest&&<section className="countdown"><div><p className="eyebrow">NEXT ADVENTURE</p><h2>{nearest.icon} {nearest.name}</h2><p>{dateText(nearest.startDate)} · {nearest.place}</p></div><strong>{daysUntil(nearest.startDate)}<small>DAYS TO GO</small></strong><div className="count-info"><b>{(registrations[nearest.id]||nearest.members).length}/{nearest.capacity}</b><span>going</span><b>₹{nearest.budget.toLocaleString("en-IN")}</b><span>budget</span></div><button className="primary" onClick={()=>openTrip(nearest)}>Open & register →</button></section>}<section className="trip-section"><div className="section-heading"><div><p className="eyebrow">THE JOURNEY</p><h2>Our trips</h2></div><div className="stats">{Object.entries(counts).map(([k,v])=><div key={k}><b>{v}</b><span>{k}</span></div>)}</div></div><div className="trip-grid">{trips.filter(t=>filter==="all"||t.status===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section><ApprovedUpdates requests={requests} trips={trips} openTrip={openTrip}/></section>;
 }
 
-function TripCard({trip,click,requests=[]}) { const s=STATUS[effectiveStatus(trip)]; const approved=requests.filter(r=>r.status==="approved"&&String(r.tripId)===String(trip.id)); return <button className="trip-card" style={{"--status":s.color}} onClick={click}><div className="trip-card-top"><span className="trip-icon">{trip.icon}</span><span className="status-pill">{s.label}</span></div><h3>{trip.name}</h3><p>{trip.place}</p><div className="trip-card-bottom">{dateText(trip.startDate)} <span>{approved.length?approved.length+" approved · ":""}View →</span></div></button>; }
+const TRIP_IMAGES = {
+  ap:"https://images.unsplash.com/photo-1593693411515-c20261bcad6e?auto=format&fit=crop&w=1000&q=82",
+  goa:"https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1000&q=82",
+  ka:"https://images.unsplash.com/photo-1524498250077-390f9e378fc0?auto=format&fit=crop&w=1000&q=82",
+  netrani:"https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1000&q=82",
+  dandeli:"https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1000&q=82"
+};
+function TripCard({trip,click,requests=[]}) {
+  const s=STATUS[effectiveStatus(trip)];
+  const approved=requests.filter(r=>r.status==="approved"&&String(r.tripId)===String(trip.id));
+  const image=trip.image||TRIP_IMAGES[trip.id]||TRIP_IMAGES.ap;
+  return <button className="trip-card" style={{"--status":s.color}} onClick={click}>
+    <div className="trip-card-image"><img src={image} alt={trip.name}/><div className="trip-card-image-overlay"/></div>
+    <div className="trip-card-top"><span className="trip-icon">{trip.icon}</span><span className="status-pill">{s.label}</span></div>
+    <h3>{trip.name}</h3><p>{trip.place}</p>
+    <div className="trip-card-bottom">{dateText(trip.startDate)} <span>{approved.length?approved.length+" approved · ":""}View →</span></div>
+  </button>;
+}
 
 function TripList({trips,counts,filter,setFilter,openTrip,requests}) { return <section className="page"><p className="eyebrow">DESTINATION INDEX</p><h1>Trips & plans</h1><div className="filterbar">{["all","completed","upcoming","ongoing","wishlist","cancelled"].map(k=><button className={filter===k?"active":""} onClick={()=>setFilter(k)} key={k}>{k} {k!=="all"&&counts[k]}</button>)}</div><div className="big-grid">{trips.filter(t=>filter==="all"||t.status===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section>; }
 

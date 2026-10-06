@@ -340,3 +340,95 @@
 .map-tools{box-shadow:0 12px 35px rgba(0,0,0,.14)}
 .map-tools button{font-size:15px}
 @media(max-width:700px){.map-wrap{min-height:500px}.map{height:500px}.trip-card-image{height:135px}}
+
+
+/* Map interaction + marker detail popup */
+.map-wrap{isolation:isolate}
+.map-wrap .map{touch-action:none;cursor:grab}
+.map-wrap .map:active{cursor:grabbing}
+.map-wrap .rsm-zoomable-group{will-change:transform}
+.map-wrap .india-state{transition:fill .18s ease,stroke-width .18s ease}
+.map-wrap .india-state:hover{filter:brightness(1.08)}
+.marker-hit{cursor:pointer;pointer-events:all;transition:transform .18s ease,filter .18s ease}
+.rsm-marker{cursor:pointer;pointer-events:all}
+.rsm-marker:hover .marker-hit{filter:brightness(1.12);transform:scale(1.12)}
+.map-popup{
+  position:absolute;
+  z-index:8;
+  top:58px;
+  right:18px;
+  width:min(330px,calc(100% - 36px));
+  display:flex;
+  gap:13px;
+  padding:15px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:18px;
+  background:rgba(7,14,20,.88);
+  color:#edf5f0;
+  box-shadow:0 22px 65px rgba(0,0,0,.35);
+  backdrop-filter:blur(20px) saturate(1.2);
+  -webkit-backdrop-filter:blur(20px) saturate(1.2);
+  pointer-events:auto;
+}
+.map-popup-close{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:28px;
+  height:28px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  color:inherit;
+  font-size:18px;
+  line-height:1;
+}
+.map-popup-icon{
+  flex:0 0 46px;
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:rgba(255,255,255,.07);
+  font-size:24px;
+}
+.map-popup-body{min-width:0;padding-right:20px}
+.map-popup-status{font:700 8px "DM Mono";letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.map-popup h3{margin:0 0 3px;font-size:20px;letter-spacing:-.03em}
+.map-popup p{margin:0 0 9px;color:#94a29d;font-size:10px}
+.map-popup-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+.map-popup-meta span{
+  padding:5px 7px;
+  border-radius:8px;
+  background:rgba(255,255,255,.055);
+  color:#bdc9c4;
+  font:8px "DM Mono";
+}
+.map-popup-body>small{display:block;color:#81908b;font-size:9px;line-height:1.5;margin-bottom:10px}
+.map-popup-open{
+  border:1px solid rgba(110,231,183,.25);
+  border-radius:9px;
+  padding:8px 10px;
+  background:rgba(110,231,183,.09);
+  color:#6ee7b7;
+  font-size:10px;
+  font-weight:800;
+}
+.map-popup-open:hover{background:rgba(110,231,183,.16)}
+.theme-light .map-popup{
+  background:rgba(250,252,249,.9);
+  color:#17201d;
+  border-color:rgba(255,255,255,.9);
+  box-shadow:0 22px 65px rgba(45,55,50,.18);
+}
+.theme-light .map-popup p{color:#66736d}
+.theme-light .map-popup-meta span{background:rgba(23,32,29,.05);color:#56645e}
+.theme-light .map-popup-body>small{color:#6e7b75}
+.theme-light .map-popup-close{background:rgba(23,32,29,.05);color:#17201d}
+.theme-light .map-popup-open{color:#167a55;border-color:rgba(22,122,85,.22);background:rgba(22,122,85,.08)}
+@media(max-width:700px){
+  .map-popup{top:50px;left:10px;right:10px;width:auto;padding:13px}
+  .map-popup h3{font-size:18px}
+  .map-note{max-width:calc(100% - 20px);line-height:1.5}
+}

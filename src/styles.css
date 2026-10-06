@@ -323,3 +323,20 @@
   .site::before{position:fixed;background-position:center top}
   .theme-light.site::before,.theme-dark.site::before{opacity:.68}
 }
+
+/* Travel cards with destination photography */
+.trip-card{position:relative;overflow:hidden;padding:0 17px 17px;min-height:330px}
+.trip-card-image{height:145px;margin:0 -17px 0;position:relative;overflow:hidden;background:linear-gradient(135deg,#27433a,#101a20)}
+.trip-card-image img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .7s cubic-bezier(.22,1,.36,1),filter .4s ease}
+.trip-card-image-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.42))}
+.trip-card:hover .trip-card-image img{transform:scale(1.08)}
+.trip-card-top{position:relative;margin-top:-21px;z-index:2}
+.trip-card .trip-icon{border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 25px rgba(0,0,0,.2);backdrop-filter:blur(12px);background:rgba(10,18,22,.48)}
+.theme-light .trip-card .trip-icon{background:rgba(255,255,255,.72);border-color:rgba(255,255,255,.8)}
+.trip-card h3{margin-top:18px}
+.trip-card p{margin-bottom:0}
+.map-wrap{min-height:640px}
+.map{height:640px}
+.map-tools{box-shadow:0 12px 35px rgba(0,0,0,.14)}
+.map-tools button{font-size:15px}
+@media(max-width:700px){.map-wrap{min-height:500px}.map{height:500px}.trip-card-image{height:135px}}

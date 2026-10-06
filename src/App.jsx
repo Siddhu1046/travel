@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { ComposableMap, Geographies, Geography, Marker, Line, ZoomableGroup } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, Marker, Line, ZoomableGroup, useZoomPanContext } from "react-simple-maps";
 import world from "world-atlas/countries-110m.json";
 
 const STATUS = {
@@ -205,6 +205,20 @@ export default function App() {
 }
 
 
+function ScaleAwareTripMarker({trip,status,light,selectTrip,goToTrip}) {
+  const {k}=useZoomPanContext();
+  const scale=Math.max(.28,Math.min(1,1/Math.max(k,.01)));
+  const s=STATUS[status];
+  return <Marker coordinates={trip.coords} onClick={e=>selectTrip(trip,e)} onDoubleClick={()=>goToTrip(trip)} style={{cursor:"pointer",pointerEvents:"all"}}>
+    <g className="marker-hit" role="button" tabIndex="0" transform={`scale(${scale})`} onClick={e=>selectTrip(trip,e)} onDoubleClick={()=>goToTrip(trip)}>
+      <circle r="27" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
+      <circle r="13" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/>
+      <circle r="5" fill={s.color}/>
+      <text textAnchor="middle" y="42" className="marker-label">{trip.short}</text>
+    </g>
+  </Marker>;
+}
+
 function Map({trips,filter,openTrip,theme}) {
   const shown=trips.filter(t=>filter==="all"||effectiveStatus(t)===filter);
   const light=theme==="light";
@@ -250,7 +264,7 @@ function Map({trips,filter,openTrip,theme}) {
           const country=String(g.properties?.name||"");
           return <Geography key={g.rsmKey} geography={g} fill={country==="India"?(light?"#d7e4da":"#263a34"):(light?"#edf1ed":"#16241f")} stroke={light?"#8a9b93":"#50665c"} strokeWidth={country==="India"?1.05:.55} className="world-country" onClick={e=>selectRegion(country,e)} style={{outline:"none",cursor:"grab"}}/>;
         })}</Geographies>}
-        {shown.map(t=>{const status=effectiveStatus(t),s=STATUS[status];if(mode==="india"&&t.country&&t.country!=="India")return null;return <Marker key={t.id} coordinates={t.coords} onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)} style={{cursor:"pointer",pointerEvents:"all"}}><g className="marker-hit" role="button" tabIndex="0" onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)}><circle r="27" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/><circle r="13" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/><circle r="5" fill={s.color}/></g><text textAnchor="middle" y="34" className="marker-label">{t.short}</text></Marker>;})}
+        {shown.map(t=>{const status=effectiveStatus(t);if(mode==="india"&&t.country&&t.country!=="India")return null;return <ScaleAwareTripMarker key={t.id} trip={t} status={status} light={light} selectTrip={selectTrip} goToTrip={goToTrip}/>;})}
       </ZoomableGroup>
     </ComposableMap>
     <div className="map-note">{mode==="india"?"🇮🇳 State boundaries · ":"🌍 Country boundaries · "}🟢 completed · 🟠 upcoming · 🟣 wishlist · 🔵 ongoing · drag · wheel/pinch · click marker for details</div>
@@ -320,7 +334,7 @@ function CalendarPage({trips,openTrip,theme}) {
       </div>
     </div>
     <div className="calendar-jump">
-      <span>JUMP TO DATE</span><input type="date" value={jumpDate} onChange={e=>setJumpDate(e.target.value)} aria-label="Jump to a date"/><button type="button" onClick={applyJump}>Go →</button><button type="button" onClick={goToday}>Today</button><b>{new Intl.DateTimeFormat("en-IN",{month:"long",year:"numeric"}).format(cursor)}</b>
+      <span>JUMP TO DATE</span><input type="date" value={jumpDate} onChange={e=>setJumpDate(e.target.value)} aria-label="Jump to a date"/><button type="button" onClick={applyJump}>Go →</button>
     </div>
     <div className="calendar-legend"><span><i className="cal-dot completed"/>Completed</span><span><i className="cal-dot upcoming"/>Upcoming</span><span><i className="cal-dot wishlist"/>Possible date</span></div>
     <div className="calendar-grid">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}{cells.map((d,i)=><div className={"calendar-cell "+(!d?"empty-cell":"")} key={i}>{d&&<><b>{d}</b>{byDay(d).map((e,j)=><button key={j} className={"calendar-event "+(e.possible?"possible":effectiveStatus(e.trip))} onClick={()=>openTrip(e.trip)}><span>{e.trip.icon}</span>{e.trip.name}</button>)}</>}</div>)}</div>

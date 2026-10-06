@@ -726,3 +726,25 @@
 .map-wrap{overscroll-behavior:contain}
 .map-wrap .map{overscroll-behavior:contain}
 .calendar-jump b{display:none}
+
+
+.auth-modal{max-width:480px}
+.auth-modal .primary:disabled{opacity:.6;cursor:wait}
+.text-button{
+  border:0;
+  background:transparent;
+  color:inherit;
+  opacity:.8;
+  padding:8px 4px;
+  cursor:pointer;
+  font:inherit;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.text-button:hover{opacity:1}
+.auth-note{
+  display:block;
+  margin-top:4px;
+  line-height:1.5;
+  opacity:.55;
+}

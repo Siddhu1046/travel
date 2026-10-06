@@ -140,6 +140,10 @@ export default function App() {
     loadSession();
     const {data:{subscription}}=supabase.auth.onAuthStateChange(async (_event,current)=>{
       if(!alive)return;
+      if(_event==="PASSWORD_RECOVERY"){
+        setAuthMode("reset");
+        setAuthOpen(true);
+      }
       setSession(current);
       if(current?.user){
         const {data}=await supabase.from("profiles").select("*").eq("id",current.user.id).maybeSingle();

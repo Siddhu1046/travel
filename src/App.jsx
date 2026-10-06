@@ -563,6 +563,51 @@ export default function App() {
     }
     pop(status==="approved"?"Trip request approved and added to the trip ✓":"Trip request rejected.");
   };
+  const removeCrewMember = async (member,trip) => {
+    if(!member?.id) return;
+    if(!confirm("Remove "+member.member_name+" from "+trip.name+"? They will no longer appear in the crew.")) return;
+
+    const {error:memberError}=await supabase
+      .from("trip_members")
+      .update({is_verified:false})
+      .eq("id",member.id);
+
+    if(memberError){
+      console.error(memberError);
+      return pop("Could not remove this crew member.");
+    }
+
+    if(member.user_id){
+      const {error:applicationError}=await supabase
+        .from("trip_applications")
+        .update({
+          status:"rejected",
+          reviewed_at:new Date().toISOString(),
+          reviewed_by:session?.user?.id||null
+        })
+        .eq("trip_id",String(member.trip_id))
+        .eq("applicant_id",member.user_id)
+        .eq("status","approved");
+
+      if(applicationError){
+        console.error(applicationError);
+        await supabase.from("trip_members").update({is_verified:true}).eq("id",member.id);
+        return pop("Crew member could not be fully removed.");
+      }
+    }
+
+    setTripMembers(prev=>prev.filter(m=>String(m.id)!==String(member.id)));
+    setCloudApplications(prev=>prev.map(a=>
+      String(a.tripId)===String(member.trip_id)&&String(a.applicantId||"")===String(member.user_id||"")&&a.status==="approved"
+        ? {...a,status:"rejected",reviewedAt:new Date().toISOString()}
+        : a
+    ));
+    setRegistrations(prev=>({
+      ...prev,
+      [member.trip_id]:(prev[member.trip_id]||[]).filter(name=>name!==member.member_name)
+    }));
+    pop(member.member_name+" removed from "+trip.name+" ✓");
+  };
   const deleteRequest = async r => {
     if(r?.source==="cloud"){
       const {error}=await supabase.from("trip_applications").delete().eq("id",r.id);

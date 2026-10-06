@@ -534,3 +534,54 @@
 .map-wrap svg{overflow:visible}
 .marker-hit{pointer-events:all;cursor:pointer}
 .marker-hit circle,.marker-hit text{pointer-events:all}
+
+
+/* Final clean calendar + reliable map interaction */
+.calendar-page{overflow:visible}
+.calendar-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:18px}
+.calendar-head>div:first-child{min-width:0}
+.calendar-head h1{font-size:clamp(38px,4.6vw,64px);line-height:.98;max-width:720px;margin-bottom:14px}
+.calendar-head .hero-text{max-width:650px}
+.calendar-nav{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:6px;border:1px solid var(--line);border-radius:14px;background:var(--panel-2);box-shadow:0 12px 35px rgba(0,0,0,.06)}
+.calendar-nav button,.calendar-nav select{height:38px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text)}
+.calendar-nav button{min-width:38px;padding:0 9px}
+.calendar-nav select{padding:0 10px;min-width:108px}
+.calendar-nav .today-btn{padding:0 13px;color:var(--green);background:rgba(56,217,150,.09);border-color:rgba(56,217,150,.18)}
+.calendar-nav button:hover,.calendar-nav select:hover{background:rgba(255,255,255,.08)}
+.calendar-jump{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:0 0 14px;border:1px solid var(--line);border-radius:13px;background:var(--panel-2)}
+.calendar-jump>span{font:8px "DM Mono";letter-spacing:.12em;color:var(--muted)}
+.calendar-jump input{height:36px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);padding:0 10px}
+.calendar-jump button{height:36px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--text)}
+.calendar-jump button:hover{background:rgba(255,255,255,.08)}
+.calendar-jump b{margin-left:auto;font:700 11px "DM Mono";color:var(--muted)}
+.calendar-legend{margin:0 0 10px}
+.calendar-grid{border-radius:15px}
+.calendar-weekday{padding:10px 11px}
+.calendar-cell{min-height:112px;padding:8px}
+.calendar-event{margin-top:6px;padding:6px 7px}
+.theme-light .calendar-nav,.theme-light .calendar-jump{background:rgba(255,255,255,.48);border-color:rgba(255,255,255,.72);box-shadow:0 12px 35px rgba(40,45,40,.07);backdrop-filter:blur(18px)}
+.theme-light .calendar-jump input{background:rgba(255,255,255,.55);color:#17231f;border-color:rgba(255,255,255,.72)}
+
+.map-wrap:before,.map-wrap:after{pointer-events:none}
+.map-wrap .map{position:relative;z-index:1;touch-action:none;pointer-events:auto;cursor:grab}
+.map-wrap .map:active{cursor:grabbing}
+.map-wrap .map-switch,.map-wrap .map-tools,.map-wrap .map-caption,.map-wrap .map-popup,.map-wrap .map-note{pointer-events:auto}
+.map-wrap .rsm-zoomable-group{pointer-events:all}
+.map-wrap .rsm-geographies,.map-wrap .rsm-geography,.map-wrap .rsm-marker,.map-wrap .rsm-marker *{pointer-events:all}
+.map-wrap .india-state,.map-wrap .world-country{cursor:pointer}
+.map-wrap .india-state:hover,.map-wrap .world-country:hover{filter:brightness(1.08)}
+.map-popup{z-index:12}
+.region-popup{min-width:290px}
+@media(max-width:900px){
+  .calendar-head{align-items:flex-start;flex-direction:column}
+  .calendar-nav{width:100%;overflow:auto}
+  .calendar-jump{flex-wrap:wrap}
+  .calendar-jump b{width:100%;margin-left:0}
+}
+@media(max-width:600px){
+  .calendar-head h1{font-size:40px}
+  .calendar-nav{justify-content:space-between}
+  .calendar-nav select{min-width:92px}
+  .calendar-cell{min-height:92px;padding:6px}
+  .calendar-event{font-size:8px}
+}

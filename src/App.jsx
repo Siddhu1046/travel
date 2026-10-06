@@ -728,7 +728,7 @@ function Stories({trips=[],stories,story,setStory,submit,positions={},setPositio
       onPointerCancel={onWallPointerUp}
       style={{cursor:movingWall?"grabbing":"grab"}}
     >
-      <div className="wall-paper" style={{transform:`translate3d(${pan.x}px,${pan.y}px,0) scale(${zoom})`}}>
+      <div className="wall-paper" style={{transform:`translate3d(calc(-50% + ${pan.x}px),calc(-50% + ${pan.y}px),0) scale(${zoom})`}}>
         <div className="wall-center-label">OUR MEMORIES · SIDDHU × MANI</div>
         {stories.map((s,i)=>{
           const colors=["yellow","cream","green","pink","blue"];

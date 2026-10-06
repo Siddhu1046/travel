@@ -19,11 +19,11 @@ function effectiveStatus(t) {
 }
 
 const INITIAL_TRIPS = [
-  { id:"ap", name:"Andhra Pradesh", short:"AP", status:"completed", startDate:"2020-01-07", endDate:"2020-01-11", place:"Visakhapatnam & Coastal AP", coords:[83.2185,17.6868], country:"India", state:"Andhra Pradesh", summary:"Simhachalam, Kailasagiri, RK Beach, Lambasingi, Bheemili and more.", budget:0, members:["Siddhu"], capacity:8, icon:"🌊" },
-  { id:"goa", name:"Goa", short:"GOA", status:"completed", startDate:"2023-12-03", endDate:"2023-12-06", place:"Madgaon · Calangute · Baga", coords:[74.124,15.2993], country:"India", state:"Goa", summary:"First flight, kayaking, beaches, Aguada Fort and the coastline.", budget:0, members:["Siddhu"], capacity:8, icon:"🌴" },
-  { id:"ka", name:"Karnataka", short:"KA", status:"completed", startDate:"2023-12-04", endDate:"2023-12-09", place:"Gokarna · Murudeshwar · Hampi", coords:[75.0967,15.3647], country:"India", state:"Karnataka", summary:"Gokarna, Yana Caves, Murudeshwar, Dudhsagar Falls and Hampi.", budget:0, members:["Siddhu"], capacity:8, icon:"🏛️" },
-  { id:"netrani", name:"Netrani Island", short:"NETRANI", status:"upcoming", startDate:"2026-11-14", endDate:"2026-11-16", place:"Karnataka coast", coords:[74.752,14.1], country:"India", state:"Karnataka", summary:"Our next adventure — diving, island views and a coastal escape.", budget:12000, members:["Siddhu","Mani"], capacity:8, icon:"🤿" },
-  { id:"dandeli", name:"Dandeli", short:"DANDELI", status:"wishlist", startDate:"", endDate:"", place:"Karnataka", coords:[74.618,15.266], country:"India", state:"Karnataka", summary:"A wild trip idea waiting for dates, crew and a route.", budget:10000, members:["Siddhu","Mani"], capacity:8, icon:"🌿" }
+  { id:"ap", name:"Andhra Pradesh", short:"AP", status:"completed", startDate:"2020-01-07", endDate:"2020-01-11", place:"Visakhapatnam & Coastal AP", coords:[83.20161,17.68009], country:"India", state:"Andhra Pradesh", summary:"Simhachalam, Kailasagiri, RK Beach, Lambasingi, Bheemili and more.", budget:0, members:["Siddhu"], capacity:8, icon:"🌊" },
+  { id:"goa", name:"Goa", short:"GOA", status:"completed", startDate:"2023-12-03", endDate:"2023-12-06", place:"Madgaon · Calangute · Baga", coords:[73.8278,15.4909], country:"India", state:"Goa", summary:"First flight, kayaking, beaches, Aguada Fort and the coastline.", budget:0, members:["Siddhu"], capacity:8, icon:"🌴" },
+  { id:"ka", name:"Karnataka", short:"KA", status:"completed", startDate:"2023-12-04", endDate:"2023-12-09", place:"Gokarna · Murudeshwar · Hampi", coords:[74.3184,14.544], country:"India", state:"Karnataka", summary:"Gokarna, Yana Caves, Murudeshwar, Dudhsagar Falls and Hampi.", budget:0, members:["Siddhu"], capacity:8, icon:"🏛️" },
+  { id:"netrani", name:"Netrani Island", short:"NETRANI", status:"upcoming", startDate:"2026-11-14", endDate:"2026-11-16", place:"Karnataka coast", coords:[74.32689,14.01761], country:"India", state:"Karnataka", summary:"Our next adventure — diving, island views and a coastal escape.", budget:12000, members:["Siddhu","Mani"], capacity:8, icon:"🤿" },
+  { id:"dandeli", name:"Dandeli", short:"DANDELI", status:"wishlist", startDate:"", endDate:"", place:"Karnataka", coords:[74.61667,15.26667], country:"India", state:"Karnataka", summary:"A wild trip idea waiting for dates, crew and a route.", budget:10000, members:["Siddhu","Mani"], capacity:8, icon:"🌿" }
 ];
 
 const INITIAL_STORIES = [
@@ -92,13 +92,13 @@ const LOCATION_BY_TRIP={
   ap:INDIA_LOCATIONS["Andhra Pradesh"],
   goa:INDIA_LOCATIONS["Goa"],
   ka:INDIA_LOCATIONS["Karnataka"],
-  netrani:{country:"India",state:"Karnataka",coords:[74.752,14.1]},
-  dandeli:{country:"India",state:"Karnataka",coords:[74.618,15.266]}
+  netrani:{country:"India",state:"Karnataka",coords:[74.32689,14.01761]},
+  dandeli:{country:"India",state:"Karnataka",coords:[74.61667,15.26667]}
 };
 
 export default function App() {
   const [trips,setTrips] = useStore("travel-trips",INITIAL_TRIPS);
-  useEffect(()=>{setTrips(prev=>prev.map(t=>{const known=LOCATION_BY_TRIP[t.id]||Object.entries(INDIA_LOCATIONS).map(([k,v])=>[k,v]).find(([k])=>String(t.name||"").toLowerCase().includes(k.toLowerCase()))?.[1];return known&&(!t.country||!t.state)?{...t,...known}:t;}));},[]);
+  useEffect(()=>{setTrips(prev=>prev.map(t=>{const known=LOCATION_BY_TRIP[t.id]||Object.entries(INDIA_LOCATIONS).map(([k,v])=>[k,v]).find(([k])=>String(t.name||"").toLowerCase().includes(k.toLowerCase()))?.[1];return known?{...t,...known}:t;}));},[]);
   const [stories,setStories] = useStore("travel-stories",INITIAL_STORIES);
   const [media,setMedia] = useStore("travel-media",INITIAL_MEDIA);
   const [registrations,setRegistrations] = useStore("travel-registrations",{});
@@ -207,14 +207,14 @@ export default function App() {
 
 function ScaleAwareTripMarker({trip,status,light,selectTrip,goToTrip}) {
   const {k}=useZoomPanContext();
-  const scale=Math.max(.28,Math.min(1,1/Math.max(k,.01)));
+  const scale=Math.max(.3,Math.min(1,1/Math.pow(Math.max(k,.01),1.25)));
   const s=STATUS[status];
   return <Marker coordinates={trip.coords} onClick={e=>selectTrip(trip,e)} onDoubleClick={()=>goToTrip(trip)} style={{cursor:"pointer",pointerEvents:"all"}}>
     <g className="marker-hit" role="button" tabIndex="0" transform={`scale(${scale})`} onClick={e=>selectTrip(trip,e)} onDoubleClick={()=>goToTrip(trip)}>
-      <circle r="27" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
-      <circle r="13" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/>
-      <circle r="5" fill={s.color}/>
-      <text textAnchor="middle" y="42" className="marker-label">{trip.short}</text>
+      <circle r="16" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
+      <circle r="8" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="2.2"/>
+      <circle r="3.2" fill={s.color}/>
+      <text textAnchor="middle" y="27" className="marker-label">{trip.short}</text>
     </g>
   </Marker>;
 }

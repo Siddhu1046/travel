@@ -207,18 +207,24 @@ export default function App() {
 
 function ScaleAwareTripMarker({trip,status,light,selectTrip,goToTrip}) {
   const {k}=useZoomPanContext();
-  const scale=Math.max(.3,Math.min(1,1/Math.pow(Math.max(k,.01),1.25)));
+  const zoom=Math.max(k,.01);
+  // Keep the geographic anchor exact: do not CSS/transform-scale the marker group.
+  // Instead shrink the actual SVG geometry as the map zooms in.
+  const factor=Math.max(.36,Math.min(1,1/Math.pow(zoom,0.72)));
+  const haloR=16*factor;
+  const ringR=8*factor;
+  const coreR=3.2*factor;
+  const labelY=27*factor;
   const s=STATUS[status];
   return <Marker coordinates={trip.coords} onClick={e=>selectTrip(trip,e)} onDoubleClick={()=>goToTrip(trip)} style={{cursor:"pointer",pointerEvents:"all"}}>
-    <g className="marker-hit" role="button" tabIndex="0" transform={`scale(${scale})`} onClick={e=>selectTrip(trip,e)} onDoubleClick={()=>goToTrip(trip)}>
-      <circle r="16" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
-      <circle r="8" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="2.2"/>
-      <circle r="3.2" fill={s.color}/>
-      <text textAnchor="middle" y="27" className="marker-label">{trip.short}</text>
+    <g className="marker-hit" role="button" tabIndex="0" onClick={e=>selectTrip(trip,e)} onDoubleClick={()=>goToTrip(trip)}>
+      <circle r={haloR} fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
+      <circle r={ringR} fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth={Math.max(1.2,2.2*factor)}/>
+      <circle r={coreR} fill={s.color}/>
+      <text textAnchor="middle" y={labelY} className="marker-label">{trip.short}</text>
     </g>
   </Marker>;
 }
-
 function Map({trips,filter,openTrip,theme}) {
   const shown=trips.filter(t=>filter==="all"||effectiveStatus(t)===filter);
   const light=theme==="light";

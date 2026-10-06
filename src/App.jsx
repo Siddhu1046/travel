@@ -796,15 +796,83 @@ function TripPage({trip,registrations,requests,application,setApplication,regist
     {day:"03",title:"The road home",text:"One last experience, photographs and the journey back."}
   ];
   const experience=trip.experience||"A trip becomes a memory through the people, places and small moments we share along the way.";
+
+  const applicationForm=<section className="register-card">
+    <div>
+      <p className="eyebrow">JOIN THIS TRIP</p>
+      <h2>Send for confirmation</h2>
+      <p>Apply with a few details. Your place is confirmed only after admin approval.</p>
+      <small>{appliedCount} applied · {Math.max(0,trip.capacity-appliedCount)} spots left</small>
+    </div>
+    <form className="register-form" onSubmit={e=>{e.preventDefault();register();}}>
+      <input value={application.name} onChange={e=>setApplication({...application,name:e.target.value})} placeholder="Full name" required/>
+      <input value={application.phone} onChange={e=>setApplication({...application,phone:e.target.value})} placeholder="Mobile number" required/>
+      <div className="two">
+        <input value={application.age} onChange={e=>setApplication({...application,age:e.target.value})} type="number" min="13" max="100" placeholder="Age"/>
+        <input value={application.city} onChange={e=>setApplication({...application,city:e.target.value})} placeholder="City"/>
+      </div>
+      <textarea value={application.message} onChange={e=>setApplication({...application,message:e.target.value})} placeholder="Anything we should know? (optional)"/>
+      <button className="primary">Send for confirmation →</button>
+    </form>
+  </section>;
+
+  const applicationState=myApplicationStatus==="pending"
+    ? <section className="application-state pending">
+        <div className="application-check" aria-hidden="true"><span>✓</span></div>
+        <div className="application-state-copy">
+          <p className="eyebrow">APPLICATION SENT</p>
+          <h2>Sent to our team.</h2>
+          <p>We've received your application. Our team will review the details and respond within 12 hours.</p>
+          <div className="application-steps"><span>✓ Details received</span><span>◷ Under review</span></div>
+        </div>
+      </section>
+    : myApplicationStatus==="approved"
+      ? <section className="application-state approved">
+          <div className="application-check" aria-hidden="true"><span>✓</span></div>
+          <div className="application-state-copy">
+            <p className="eyebrow">YOU'RE IN</p>
+            <h2>You're approved. Pack your bags.</h2>
+            <p>Your place on this trip is confirmed. The crew is waiting — now it is time to get ready for the journey.</p>
+            <div className="application-steps"><span>✓ Application approved</span><span>✓ Crew spot reserved</span></div>
+          </div>
+        </section>
+      : applicationForm;
+
   return <section className="page trip-detail-page">
     <button className="back" onClick={back}>← Back to trips</button>
-    <div className="trip-hero-detail"><div><span className="giant-icon">{trip.icon}</span><p className="eyebrow">{STATUS[effectiveStatus(trip)].label} · {trip.place}</p><h1>{trip.name}</h1><p className="hero-text">{trip.summary}</p></div><div className="date-box"><b>{dateText(trip.startDate)}</b><span>{trip.endDate?"→ "+dateText(trip.endDate):"Planning stage"}</span></div></div>
-    {completed?<><section className="experience-intro"><p className="eyebrow">THE EXPERIENCE</p><h2>What we lived, not just where we went.</h2><p>{experience}</p></section>
-      <section className="detail-grid"><article className="info-card"><span className="detail-icon">🧭</span><b>JOURNEY</b><h3>{itinerary.length} chapters</h3><p>From departure to the moments we still talk about.</p></article><article className="info-card"><span className="detail-icon">👥</span><b>OUR TEAM</b><h3>{people.length} people</h3><p>{people.join(" · ")}</p></article><article className="info-card"><span className="detail-icon">📸</span><b>CAPTURED</b><h3>Drone + action cam</h3><p>Every road, view and chaotic little moment documented.</p></article></section>
+    <div className="trip-hero-detail">
+      <div>
+        <span className="giant-icon">{trip.icon}</span>
+        <p className="eyebrow">{STATUS[effectiveStatus(trip)].label} · {trip.place}</p>
+        <h1>{trip.name}</h1>
+        <p className="hero-text">{trip.summary}</p>
+      </div>
+      <div className="date-box">
+        <b>{dateText(trip.startDate)}</b>
+        <span>{trip.endDate?"→ "+dateText(trip.endDate):"Planning stage"}</span>
+      </div>
+    </div>
+
+    {completed ? <>
+      <section className="experience-intro"><p className="eyebrow">THE EXPERIENCE</p><h2>What we lived, not just where we went.</h2><p>{experience}</p></section>
+      <section className="detail-grid">
+        <article className="info-card"><span className="detail-icon">🧭</span><b>JOURNEY</b><h3>{itinerary.length} chapters</h3><p>From departure to the moments we still talk about.</p></article>
+        <article className="info-card"><span className="detail-icon">👥</span><b>OUR TEAM</b><h3>{people.length} people</h3><p>{people.join(" · ")}</p></article>
+        <article className="info-card"><span className="detail-icon">📸</span><b>CAPTURED</b><h3>Drone + action cam</h3><p>Every road, view and chaotic little moment documented.</p></article>
+      </section>
       <section className="itinerary-section"><div className="section-heading"><div><p className="eyebrow">THE STORY</p><h2>Our itinerary</h2></div><span className="section-note">DAY BY DAY</span></div><div className="itinerary">{itinerary.map((x,i)=><article className="itinerary-item" key={i}><span>{x.day}</span><div><b>{x.title}</b><p>{x.text}</p></div></article>)}</div></section>
       <TripMemoryStrip trip={trip}/>
       <section className="team-section"><div><p className="eyebrow">THE CREW</p><h2>People who made it a memory.</h2></div><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></section>
-    </>:<><div className="detail-grid"><article className="info-card">📍<b>LOCATION</b><h3>{trip.place}</h3><p>Route and day-by-day itinerary.</p></article><article className="info-card">💰<b>BUDGET</b><h3>₹{trip.budget.toLocaleString("en-IN")}</h3><p>Planned budget for the trip.</p></article><article className="info-card">👥<b>APPLIED</b><h3>{appliedCount} / {trip.capacity}</h3><p>People have applied. Names appear only after confirmation.</p></article></div>{["upcoming","ongoing"].includes(effectiveStatus(trip))&&(myApplicationStatus==="pending"?<section className="application-state pending"><div className="application-check" aria-hidden="true"><span>✓</span></div><div className="application-state-copy"><p className="eyebrow">APPLICATION SENT</p><h2>Sent to our team.</h2><p>We've received your application. Our team will review the details and respond within 12 hours.</p><div className="application-steps"><span>✓ Details received</span><span>◷ Under review</span></div></div></section>:myApplicationStatus==="approved"?<section className="application-state approved"><div className="application-check" aria-hidden="true"><span>✓</span></div><div className="application-state-copy"><p className="eyebrow">YOU'RE IN</p><h2>You're approved. Pack your bags.</h2><p>Your place on this trip is confirmed. The crew is waiting — now it is time to get ready for the journey.</p><div className="application-steps"><span>✓ Application approved</span><span>✓ Crew spot reserved</span></div></div></section>:<section className="register-card"><div><p className="eyebrow">JOIN THIS TRIP</p><h2>Send for confirmation</h2><p>Apply with a few details. Your place is confirmed only after admin approval.</p><small>{appliedCount} applied · {Math.max(0,trip.capacity-appliedCount)} spots left</small></div><form className="register-form" onSubmit={e=>{e.preventDefault();register();}}><input value={application.name} onChange={e=>setApplication({...application,name:e.target.value})} placeholder="Full name" required/><input value={application.phone} onChange={e=>setApplication({...application,phone:e.target.value})} placeholder="Mobile number" required/><div className="two"><input value={application.age} onChange={e=>setApplication({...application,age:e.target.value})} type="number" min="13" max="100" placeholder="Age"/><input value={application.city} onChange={e=>setApplication({...application,city:e.target.value})} placeholder="City"/></div><textarea value={application.message} onChange={e=>setApplication({...application,message:e.target.value})} placeholder="Anything we should know? (optional)"/><button className="primary">Send for confirmation →</button></form></section>)}<h2>Current crew</h2><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></>
+    </> : <>
+      <div className="detail-grid">
+        <article className="info-card">📍<b>LOCATION</b><h3>{trip.place}</h3><p>Route and day-by-day itinerary.</p></article>
+        <article className="info-card">💰<b>BUDGET</b><h3>₹{trip.budget.toLocaleString("en-IN")}</h3><p>Planned budget for the trip.</p></article>
+        <article className="info-card">👥<b>APPLIED</b><h3>{appliedCount} / {trip.capacity}</h3><p>People have applied. Names appear only after confirmation.</p></article>
+      </div>
+      {["upcoming","ongoing"].includes(effectiveStatus(trip)) && applicationState}
+      <h2>Current crew</h2>
+      <div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div>
+    </>}
   </section>;
 }
 function TripMemoryStrip({trip}) {

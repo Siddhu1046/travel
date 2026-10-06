@@ -97,6 +97,50 @@ const LOCATION_BY_TRIP={
   dandeli:{country:"India",state:"Karnataka",coords:[74.61667,15.26667]}
 };
 
+function tripToRow(t){
+  return {
+    id:String(t.id),
+    name:t.name,
+    short:t.short||"",
+    status:t.status||"wishlist",
+    start_date:t.startDate||null,
+    end_date:t.endDate||null,
+    place:t.place||"",
+    country:t.country||"India",
+    state:t.state||"",
+    latitude:Array.isArray(t.coords)?Number(t.coords[1]):null,
+    longitude:Array.isArray(t.coords)?Number(t.coords[0]):null,
+    summary:t.summary||"",
+    experience:t.experience||"",
+    budget:Number(t.budget||0),
+    capacity:Number(t.capacity||1),
+    icon:t.icon||"",
+    cancelled_at:t.cancelledAt||null
+  };
+}
+
+function rowToTrip(row,extras={}){
+  return {
+    ...extras,
+    id:String(row.id),
+    name:row.name,
+    short:row.short||extras.short||"",
+    status:row.status||"wishlist",
+    startDate:row.start_date||"",
+    endDate:row.end_date||"",
+    place:row.place||"",
+    country:row.country||"India",
+    state:row.state||"",
+    coords:[Number(row.longitude||0),Number(row.latitude||0)],
+    summary:row.summary||"",
+    experience:row.experience||"",
+    budget:Number(row.budget||0),
+    capacity:Number(row.capacity||1),
+    icon:row.icon||extras.icon||"",
+    cancelledAt:row.cancelled_at||""
+  };
+}
+
 export default function App() {
   const [trips,setTrips] = useStore("travel-trips",INITIAL_TRIPS);
   useEffect(()=>{setTrips(prev=>prev.map(t=>{const known=LOCATION_BY_TRIP[t.id]||Object.entries(INDIA_LOCATIONS).map(([k,v])=>[k,v]).find(([k])=>String(t.name||"").toLowerCase().includes(k.toLowerCase()))?.[1];return known?{...t,...known}:t;}));},[]);
@@ -124,6 +168,58 @@ export default function App() {
 
   const [theme,setTheme] = useStore("travel-theme","dark");
   const [story,setStory] = useState({title:"",text:"",tripId:""});
+
+  useEffect(()=>{
+    let alive=true;
+    const loadCloudTrips=async()=>{
+      const {data,error}=await supabase
+        .from("trips")
+        .select("*")
+        .order("start_date",{ascending:true,nullsFirst:false});
+      if(!alive)return;
+      if(error){
+        console.warn("Travel Hub: could not load trips from Supabase.",error);
+        return;
+      }
+
+      let local=[];
+      try{ local=JSON.parse(localStorage.getItem("travel-trips")||"[]"); }catch{}
+
+      if(data?.length){
+        const localById=new Map(local.map(t=>[String(t.id),t]));
+        setTrips(data.map(row=>rowToTrip(row,localById.get(String(row.id))||{})));
+
+        if(role==="admin"){
+          const cloudIds=new Set(data.map(row=>String(row.id)));
+          const missing=local.filter(t=>!cloudIds.has(String(t.id)));
+          if(missing.length){
+            const {error:syncError}=await supabase
+              .from("trips")
+              .upsert(missing.map(tripToRow),{onConflict:"id"});
+            if(syncError) console.warn("Travel Hub: could not sync local trips.",syncError);
+          }
+        }
+        return;
+      }
+
+      if(role==="admin"){
+        const source=local.length?local:INITIAL_TRIPS;
+        const {data:seeded,error:seedError}=await supabase
+          .from("trips")
+          .upsert(source.map(tripToRow),{onConflict:"id"})
+          .select("*");
+        if(!alive)return;
+        if(seedError){
+          console.warn("Travel Hub: could not seed trips.",seedError);
+          return;
+        }
+        setTrips((seeded||[]).map(row=>rowToTrip(row,source.find(t=>String(t.id)===String(row.id))||{})));
+        pop("Trips synced to the cloud ✓");
+      }
+    };
+    loadCloudTrips();
+    return ()=>{alive=false;};
+  },[role]);
   useEffect(()=>{
     let alive=true;
     const loadSession=async()=>{
@@ -241,12 +337,25 @@ export default function App() {
   const soon = upcoming.filter(t => daysUntil(t.startDate) <= 30);
   const pop = m => { setToast(m); setTimeout(()=>setToast(""),3000); };
   const openTrip = t => { setSelected(t); setPage("trip"); };
-  const cancelTrip = t => {
+  const cancelTrip = async t => {
     const s=effectiveStatus(t);
     if(!["upcoming","ongoing"].includes(s)) return pop("Only upcoming or ongoing trips can be cancelled.");
     if(!confirm("Cancel "+t.name+"? Completed trips cannot be cancelled.")) return;
-    setTrips(trips.map(x=>x.id===t.id?{...x,status:"cancelled",cancelledAt:new Date().toISOString()}:x));
-    pop(t.name+" cancelled.");
+
+    const cancelledAt=new Date().toISOString();
+    const next={...t,status:"cancelled",cancelledAt};
+    setTrips(prev=>prev.map(x=>x.id===t.id?next:x));
+
+    const {error}=await supabase
+      .from("trips")
+      .update({status:"cancelled",cancelled_at:cancelledAt,updated_at:new Date().toISOString()})
+      .eq("id",String(t.id));
+
+    if(error){
+      console.error(error);
+      return pop("Trip cancelled locally, but cloud sync failed.");
+    }
+    pop(t.name+" cancelled and synced ✓");
   };
   const register = t => {
     if(!session) { setAuthMode("signin"); setAuthOpen(true); return pop("Sign in first to apply for a trip."); }
@@ -286,7 +395,7 @@ export default function App() {
     }
     pop(status==="approved"?"Trip request approved and added to the trip ✓":"Trip request rejected.");
   };
-  const saveTrip = e => {
+  const saveTrip = async e => {
     e.preventDefault(); const f=new FormData(e.currentTarget);
     let itinerary=[]; try { itinerary=JSON.parse(f.get("itinerary")||"[]"); } catch { return pop("Itinerary must be valid JSON."); }
     const gallery=(f.get("gallery")||"").split("\n").map(x=>x.trim()).filter(Boolean);
@@ -296,7 +405,20 @@ export default function App() {
     if(requestedStatus==="cancelled" && !["upcoming","ongoing"].includes(effectiveStatus(draft))) return pop("Only upcoming or ongoing trips can be cancelled.");
     const country=f.get("country")||draft.country||"India";const state=f.get("state")||draft.state||"";const preset=country==="India"?INDIA_LOCATIONS[state]:null;const next={...draft,name:f.get("name"),place:f.get("place"),status:requestedStatus,startDate:f.get("startDate"),endDate:f.get("endDate"),country,state,coords:preset?.coords||[Number(f.get("lng")||draft.coords?.[0]||0),Number(f.get("lat")||draft.coords?.[1]||0)],budget:Number(f.get("budget")||0),capacity:Number(f.get("capacity")||1),summary:f.get("summary"),experience:f.get("experience"),itinerary,gallery,possibleDates:(f.get("possibleDates")||"").split("\n").map(x=>x.trim()).filter(Boolean)};
 
-    setTrips(trips.map(t=>t.id===next.id?next:t)); setSelected(next); setDraft(null); pop("Trip details updated.");
+    setTrips(prev=>prev.some(t=>String(t.id)===String(next.id)?prev.map(t=>t.id===next.id?next:t):[...prev,next]));
+    setSelected(next);
+    setDraft(null);
+
+    const {error}=await supabase
+      .from("trips")
+      .upsert(tripToRow(next),{onConflict:"id"});
+
+    if(error){
+      console.error(error);
+      pop("Trip saved locally, but cloud sync failed.");
+      return;
+    }
+    pop("Trip details saved to the cloud ✓");
   };
 
   return <main className={"site "+(theme==="light"?"theme-light":"theme-dark")}>
@@ -430,7 +552,7 @@ function TripCard({trip,click,requests=[]}) {
   </button>;
 }
 
-function TripList({trips,counts,filter,setFilter,openTrip,requests}) { return <section className="page"><p className="eyebrow">DESTINATION INDEX</p><h1>Trips & plans</h1><div className="filterbar">{["all","completed","upcoming","ongoing","wishlist","cancelled"].map(k=><button className={filter===k?"active":""} onClick={()=>setFilter(k)} key={k}>{k} {k!=="all"&&counts[k]}</button>)}</div><div className="big-grid">{trips.filter(t=>filter==="all"||t.status===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section>; }
+function TripList({trips,counts,filter,setFilter,openTrip,requests}) { return <section className="page"><p className="eyebrow">DESTINATION INDEX</p><h1>Trips & plans</h1><div className="filterbar">{["all","completed","upcoming","ongoing","wishlist","cancelled"].map(k=><button className={filter===k?"active":""} onClick={()=>setFilter(k)} key={k}>{k} {k!=="all"&&counts[k]}</button>)}</div><div className="big-grid">{trips.filter(t=>filter==="all"||effectiveStatus(t)===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section>; }
 
 function ItineraryEditor({initial}) {
   const [days,setDays]=useState(initial);

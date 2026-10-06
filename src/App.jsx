@@ -19,11 +19,11 @@ function effectiveStatus(t) {
 }
 
 const INITIAL_TRIPS = [
-  { id:"ap", name:"Andhra Pradesh", short:"AP", status:"completed", startDate:"2020-01-07", endDate:"2020-01-11", place:"Visakhapatnam & Coastal AP", coords:[83.2185,17.6868], summary:"Simhachalam, Kailasagiri, RK Beach, Lambasingi, Bheemili and more.", budget:0, members:["Siddhu"], capacity:8, icon:"🌊" },
-  { id:"goa", name:"Goa", short:"GOA", status:"completed", startDate:"2023-12-03", endDate:"2023-12-06", place:"Madgaon · Calangute · Baga", coords:[74.124,15.2993], summary:"First flight, kayaking, beaches, Aguada Fort and the coastline.", budget:0, members:["Siddhu"], capacity:8, icon:"🌴" },
-  { id:"ka", name:"Karnataka", short:"KA", status:"completed", startDate:"2023-12-04", endDate:"2023-12-09", place:"Gokarna · Murudeshwar · Hampi", coords:[75.0967,15.3647], summary:"Gokarna, Yana Caves, Murudeshwar, Dudhsagar Falls and Hampi.", budget:0, members:["Siddhu"], capacity:8, icon:"🏛️" },
-  { id:"netrani", name:"Netrani Island", short:"NETRANI", status:"upcoming", startDate:"2026-11-14", endDate:"2026-11-16", place:"Karnataka coast", coords:[74.752,14.1], summary:"Our next adventure — diving, island views and a coastal escape.", budget:12000, members:["Siddhu","Mani"], capacity:8, icon:"🤿" },
-  { id:"dandeli", name:"Dandeli", short:"DANDELI", status:"wishlist", startDate:"", endDate:"", place:"Karnataka", coords:[74.618,15.266], summary:"A wild trip idea waiting for dates, crew and a route.", budget:10000, members:["Siddhu","Mani"], capacity:8, icon:"🌿" }
+  { id:"ap", name:"Andhra Pradesh", short:"AP", status:"completed", startDate:"2020-01-07", endDate:"2020-01-11", place:"Visakhapatnam & Coastal AP", coords:[83.2185,17.6868], country:"India", state:"Andhra Pradesh", summary:"Simhachalam, Kailasagiri, RK Beach, Lambasingi, Bheemili and more.", budget:0, members:["Siddhu"], capacity:8, icon:"🌊" },
+  { id:"goa", name:"Goa", short:"GOA", status:"completed", startDate:"2023-12-03", endDate:"2023-12-06", place:"Madgaon · Calangute · Baga", coords:[74.124,15.2993], country:"India", state:"Goa", summary:"First flight, kayaking, beaches, Aguada Fort and the coastline.", budget:0, members:["Siddhu"], capacity:8, icon:"🌴" },
+  { id:"ka", name:"Karnataka", short:"KA", status:"completed", startDate:"2023-12-04", endDate:"2023-12-09", place:"Gokarna · Murudeshwar · Hampi", coords:[75.0967,15.3647], country:"India", state:"Karnataka", summary:"Gokarna, Yana Caves, Murudeshwar, Dudhsagar Falls and Hampi.", budget:0, members:["Siddhu"], capacity:8, icon:"🏛️" },
+  { id:"netrani", name:"Netrani Island", short:"NETRANI", status:"upcoming", startDate:"2026-11-14", endDate:"2026-11-16", place:"Karnataka coast", coords:[74.752,14.1], country:"India", state:"Karnataka", summary:"Our next adventure — diving, island views and a coastal escape.", budget:12000, members:["Siddhu","Mani"], capacity:8, icon:"🤿" },
+  { id:"dandeli", name:"Dandeli", short:"DANDELI", status:"wishlist", startDate:"", endDate:"", place:"Karnataka", coords:[74.618,15.266], country:"India", state:"Karnataka", summary:"A wild trip idea waiting for dates, crew and a route.", budget:10000, members:["Siddhu","Mani"], capacity:8, icon:"🌿" }
 ];
 
 const INITIAL_STORIES = [
@@ -45,8 +45,60 @@ function useStore(key, initial) {
 function daysUntil(d) { return d ? Math.max(0, Math.ceil((new Date(d+"T00:00:00")-new Date())/86400000)) : null; }
 function dateText(d) { return d ? new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(d+"T00:00:00")) : "Date not set"; }
 
+function dateRangeText(t) {
+  if (!t?.startDate) return "Date not set";
+  return t.endDate && t.endDate!==t.startDate ? dateText(t.startDate)+" → "+dateText(t.endDate) : dateText(t.startDate);
+}
+const INDIA_LOCATIONS = {
+  "Andhra Pradesh":{country:"India",state:"Andhra Pradesh",coords:[83.2185,17.6868]},
+  "Arunachal Pradesh":{country:"India",state:"Arunachal Pradesh",coords:[93.6167,27.0844]},
+  "Assam":{country:"India",state:"Assam",coords:[91.7362,26.1445]},
+  "Bihar":{country:"India",state:"Bihar",coords:[85.1376,25.5941]},
+  "Chhattisgarh":{country:"India",state:"Chhattisgarh",coords:[81.6296,21.2514]},
+  "Goa":{country:"India",state:"Goa",coords:[74.124,15.2993]},
+  "Gujarat":{country:"India",state:"Gujarat",coords:[72.5714,23.0225]},
+  "Haryana":{country:"India",state:"Haryana",coords:[76.7794,30.7333]},
+  "Himachal Pradesh":{country:"India",state:"Himachal Pradesh",coords:[77.1734,31.1048]},
+  "Jharkhand":{country:"India",state:"Jharkhand",coords:[85.3096,23.3441]},
+  "Karnataka":{country:"India",state:"Karnataka",coords:[75.8648,15.3173]},
+  "Kerala":{country:"India",state:"Kerala",coords:[76.2711,10.8505]},
+  "Madhya Pradesh":{country:"India",state:"Madhya Pradesh",coords:[77.4126,23.2599]},
+  "Maharashtra":{country:"India",state:"Maharashtra",coords:[73.8567,18.5204]},
+  "Manipur":{country:"India",state:"Manipur",coords:[93.9063,24.817]},
+  "Meghalaya":{country:"India",state:"Meghalaya",coords:[91.8933,25.5788]},
+  "Mizoram":{country:"India",state:"Mizoram",coords:[92.7176,23.7271]},
+  "Nagaland":{country:"India",state:"Nagaland",coords:[94.1086,25.6751]},
+  "Odisha":{country:"India",state:"Odisha",coords:[85.8245,20.2961]},
+  "Punjab":{country:"India",state:"Punjab",coords:[75.8573,30.901]},
+  "Rajasthan":{country:"India",state:"Rajasthan",coords:[75.7873,26.9124]},
+  "Sikkim":{country:"India",state:"Sikkim",coords:[88.6065,27.3389]},
+  "Tamil Nadu":{country:"India",state:"Tamil Nadu",coords:[80.2707,13.0827]},
+  "Telangana":{country:"India",state:"Telangana",coords:[78.4867,17.385]},
+  "Tripura":{country:"India",state:"Tripura",coords:[91.2868,23.8315]},
+  "Uttar Pradesh":{country:"India",state:"Uttar Pradesh",coords:[80.9462,26.8467]},
+  "Uttarakhand":{country:"India",state:"Uttarakhand",coords:[78.0322,30.3165]},
+  "West Bengal":{country:"India",state:"West Bengal",coords:[88.3639,22.5726]},
+  "Delhi":{country:"India",state:"Delhi",coords:[77.1025,28.7041]},
+  "Jammu and Kashmir":{country:"India",state:"Jammu and Kashmir",coords:[74.857,34.0837]},
+  "Ladakh":{country:"India",state:"Ladakh",coords:[77.577,34.1526]},
+  "Puducherry":{country:"India",state:"Puducherry",coords:[79.8083,11.9416]},
+  "Andaman and Nicobar Islands":{country:"India",state:"Andaman and Nicobar Islands",coords:[92.7265,11.6234]},
+  "Chandigarh":{country:"India",state:"Chandigarh",coords:[76.7794,30.7333]},
+  "Dadra and Nagar Haveli and Daman and Diu":{country:"India",state:"Dadra and Nagar Haveli and Daman and Diu",coords:[72.8397,20.3974]},
+  "Lakshadweep":{country:"India",state:"Lakshadweep",coords:[73,10.57]}
+};
+const INDIA_STATES=Object.keys(INDIA_LOCATIONS);
+const LOCATION_BY_TRIP={
+  ap:INDIA_LOCATIONS["Andhra Pradesh"],
+  goa:INDIA_LOCATIONS["Goa"],
+  ka:INDIA_LOCATIONS["Karnataka"],
+  netrani:{country:"India",state:"Karnataka",coords:[74.752,14.1]},
+  dandeli:{country:"India",state:"Karnataka",coords:[74.618,15.266]}
+};
+
 export default function App() {
   const [trips,setTrips] = useStore("travel-trips",INITIAL_TRIPS);
+  useEffect(()=>{setTrips(prev=>prev.map(t=>LOCATION_BY_TRIP[t.id]?{...t,...LOCATION_BY_TRIP[t.id]}:t));},[]);
   const [stories,setStories] = useStore("travel-stories",INITIAL_STORIES);
   const [media,setMedia] = useStore("travel-media",INITIAL_MEDIA);
   const [registrations,setRegistrations] = useStore("travel-registrations",{});
@@ -146,120 +198,54 @@ export default function App() {
     {page==="admin"&&role==="admin"&&<Admin trips={trips} registrations={registrations} stories={stories} cancelTrip={cancelTrip} onEdit={setDraft} approve={approve} media={media} setMedia={setMedia} setTrips={setTrips} setStories={setStories} requests={requests} reviewRequest={reviewRequest} setRequests={setRequests} onCreate={()=>setNewTripOpen(true)} wallPositions={wallPositions} setWallPositions={setWallPositions}/>}
     {adminOpen&&<div className="modal-bg"><form className="modal" onSubmit={e=>{e.preventDefault();if(adminPassword==="admin123"){setRole("admin");setPage("admin");setAdminOpen(false);setAdminPassword("");pop("Admin access granted ✓")}else pop("Wrong admin password.")}}><button type="button" className="x" onClick={()=>{setAdminOpen(false);setAdminPassword("")}}>×</button><p className="eyebrow">SECURE AREA</p><h2>Admin login</h2><p className="hero-text">Enter the admin password to open the control center.</p><label>Password<input autoFocus type="password" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)} placeholder="Admin password"/></label><button className="primary">Enter dashboard →</button><small style={{opacity:.55}}>Demo password: admin123</small></form></div>}
     {draft&&<div className="modal-bg"><form className="modal" onSubmit={saveTrip}><button type="button" className="x" onClick={()=>setDraft(null)}>×</button><p className="eyebrow">ADMIN · EDIT TRIP</p><h2>{draft.name}</h2><label>Name<input name="name" defaultValue={draft.name}/></label><label>Place<input name="place" defaultValue={draft.place}/></label><div className="two"><label>Status<select name="status" defaultValue={draft.status}><option value="upcoming">Upcoming</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="wishlist">Wishlist</option><option value="cancelled">Cancelled</option></select></label><label>Capacity<input name="capacity" type="number" defaultValue={draft.capacity}/></label></div><div className="two"><label>Start<input name="startDate" type="date" defaultValue={draft.startDate}/></label><label>End<input name="endDate" type="date" defaultValue={draft.endDate}/></label></div><label>Budget ₹<input name="budget" type="number" defaultValue={draft.budget}/></label><label>Summary<textarea name="summary" defaultValue={draft.summary}/></label><label>Experience / story<textarea name="experience" defaultValue={draft.experience||""} placeholder="What happened on this trip?"/></label><ItineraryEditor initial={draft.itinerary||[{day:"01",title:"Arrival",text:"Start the journey."},{day:"02",title:"Explore",text:"Main experiences."},{day:"03",title:"Return",text:"Final memories and journey home."}]} /><label>Gallery URLs <small>one URL per line</small><textarea name="gallery" defaultValue={(draft.gallery||[]).join("\n")} placeholder="https://..."/></label><label>Possible dates <small>one date per line — useful for wishlist planning</small><textarea name="possibleDates" defaultValue={(draft.possibleDates||[]).join("\n")} placeholder="2026-12-12\n2027-01-09"/></label><button className="primary">Save trip</button></form></div>}
-    {newTripOpen&&<div className="modal-bg"><form className="modal" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);const id=Date.now();const trip={id,possibleDates:(f.get("possibleDates")||"").split("\n").map(x=>x.trim()).filter(Boolean),name:f.get("name"),short:(f.get("short")||"TRIP").toUpperCase(),status:f.get("status"),startDate:f.get("startDate"),endDate:f.get("endDate"),place:f.get("place"),coords:[Number(f.get("lng")||78.5),Number(f.get("lat")||21.5)],summary:f.get("summary"),budget:Number(f.get("budget")||0),members:[],capacity:Number(f.get("capacity")||8),icon:f.get("icon")||"🧭",experience:f.get("experience")||"",itinerary:[],gallery:[]};setTrips([...trips,trip]);setNewTripOpen(false);pop("New trip created.");}}><button type="button" className="x" onClick={()=>setNewTripOpen(false)}>×</button><p className="eyebrow">ADMIN · NEW TRIP</p><h2>Create a trip</h2><div className="two"><label>Name<input name="name" placeholder="Trip name"/></label><label>Short label<input name="short" placeholder="GOA"/></label></div><label>Place<input name="place" placeholder="Destination / route"/></label><div className="two"><label>Status<select name="status" defaultValue="wishlist"><option value="completed">Completed</option><option value="upcoming">Upcoming</option><option value="wishlist">Wishlist</option></select></label><label>Capacity<input name="capacity" type="number" defaultValue="8"/></label></div><div className="two"><label>Start<input name="startDate" type="date"/></label><label>End<input name="endDate" type="date"/></label></div><div className="two"><label>Longitude<input name="lng" type="number" step="any" defaultValue="78.5"/></label><label>Latitude<input name="lat" type="number" step="any" defaultValue="21.5"/></label></div><div className="two"><label>Budget ₹<input name="budget" type="number" defaultValue="0"/></label><label>Icon<input name="icon" placeholder="🌴"/></label></div><label>Summary<textarea name="summary" placeholder="Short trip description"/></label><label>Experience<textarea name="experience" placeholder="What makes this trip special?"/></label><label>Possible dates <small>one date per line</small><textarea name="possibleDates" placeholder="2026-12-12\n2027-01-09"/></label><button className="primary">Create trip →</button></form></div>}
+    {newTripOpen&&<div className="modal-bg"><form className="modal" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);const id=Date.now();const country=f.get("country")||"India";const state=f.get("state")||"";const preset=country==="India"?INDIA_LOCATIONS[state]:null;const trip={id,possibleDates:(f.get("possibleDates")||"").split("\n").map(x=>x.trim()).filter(Boolean),name:f.get("name"),short:(f.get("short")||"TRIP").toUpperCase(),status:f.get("status"),startDate:f.get("startDate"),endDate:f.get("endDate"),place:f.get("place"),country,state,coords:preset?.coords||[Number(f.get("lng")||0),Number(f.get("lat")||0)],summary:f.get("summary"),budget:Number(f.get("budget")||0),members:[],capacity:Number(f.get("capacity")||8),icon:f.get("icon")||"🧭",experience:f.get("experience")||"",itinerary:[],gallery:[]};setTrips([...trips,trip]);setNewTripOpen(false);pop("New trip created.");}}><button type="button" className="x" onClick={()=>setNewTripOpen(false)}>×</button><p className="eyebrow">ADMIN · NEW TRIP</p><h2>Create a trip</h2><div className="two"><label>Name<input name="name" placeholder="Trip name"/></label><label>Short label<input name="short" placeholder="GOA"/></label></div><label>Place<input name="place" placeholder="Destination / route"/></label><div className="two"><label>Status<select name="status" defaultValue="wishlist"><option value="completed">Completed</option><option value="upcoming">Upcoming</option><option value="wishlist">Wishlist</option></select></label><label>Capacity<input name="capacity" type="number" defaultValue="8"/></label></div><div className="two"><label>Start<input name="startDate" type="date"/></label><label>End<input name="endDate" type="date"/></label></div><div className="two"><label>Country<select name="country" defaultValue="India"><option>India</option><option>World</option></select></label><label>State / UT<input name="state" list="india-states" placeholder="e.g. Goa, Karnataka"/></label></div><datalist id="india-states">{INDIA_STATES.map(s=><option key={s} value={s}/>)}</datalist><div className="two"><label>Longitude <small>World locations</small><input name="lng" type="number" step="any" defaultValue="78.5"/></label><label>Latitude <small>World locations</small><input name="lat" type="number" step="any" defaultValue="21.5"/></label></div><div className="two"><label>Budget ₹<input name="budget" type="number" defaultValue="0"/></label><label>Icon<input name="icon" placeholder="🌴"/></label></div><label>Summary<textarea name="summary" placeholder="Short trip description"/></label><label>Experience<textarea name="experience" placeholder="What makes this trip special?"/></label><label>Possible dates <small>one date per line</small><textarea name="possibleDates" placeholder="2026-12-12\n2027-01-09"/></label><button className="primary">Create trip →</button></form></div>}
     {requestOpen&&<div className="modal-bg"><form className="modal request-modal" onSubmit={submitRequest}><button type="button" className="x" onClick={()=>setRequestOpen(false)}>×</button><p className="eyebrow">PLAN WITH US</p><h2>Request a trip</h2><p className="hero-text">Tell us where you want to go and what kind of adventure you have in mind.</p><label>Trip / destination<select value={request.tripId} onChange={e=>{const id=e.target.value;const t=trips.find(x=>String(x.id)===id);setRequest({...request,tripId:id,destination:t?.name||request.destination})}}><option value="">New destination / custom trip</option>{trips.filter(t=>t.status!=="completed").map(t=><option key={t.id} value={t.id}>{t.name} · {t.status}</option>)}</select></label><div className="two"><label>Name<input value={request.name} onChange={e=>setRequest({...request,name:e.target.value})} placeholder="Your full name"/></label><label>Destination<input value={request.destination} onChange={e=>setRequest({...request,destination:e.target.value})} placeholder="Where to?"/></label></div><div className="two"><label>Phone number<input value={request.phone} onChange={e=>setRequest({...request,phone:e.target.value})} placeholder="+91 XXXXX XXXXX"/></label><label>Instagram ID<input value={request.instagram} onChange={e=>setRequest({...request,instagram:e.target.value})} placeholder="@yourhandle"/></label></div><div className="two"><label>Preferred date<input value={request.date} onChange={e=>setRequest({...request,date:e.target.value})} type="date"/></label><label>People<input value={request.people} onChange={e=>setRequest({...request,people:e.target.value})} type="number" min="1" placeholder="2"/></label></div><label>What are you looking for?<textarea value={request.message} onChange={e=>setRequest({...request,message:e.target.value})} placeholder="Beaches, mountains, road trip, budget, activities..."/></label><button className="primary">Send request →</button></form></div>}
     <footer className="site-footer"><div className="footer-main"><div className="footer-brand"><span className="brand-mark">S×M</span><div><strong>OUR JOURNEY</strong><p>Two people. A thousand roads.<br/>A map full of memories.</p></div></div><div><h4>EXPLORE</h4><button onClick={()=>setPage("trips")}>Trips & plans</button><button onClick={()=>setPage("memories")}>Memories</button><button onClick={()=>setPage("stories")}>Stories</button></div><div><h4>PLAN WITH US</h4><button onClick={()=>setRequestOpen(true)}>Request a trip</button><button onClick={()=>setPage("trips")}>Join an adventure</button><span>For collaborations · DM us</span></div><div><h4>FOLLOW</h4><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram · Siddhu</a><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram · Mani</a><a href="mailto:hello@ourjourney.travel">Email us</a></div></div><div className="footer-bottom"><span>© 2026 OUR JOURNEY · SIDDHU × MANI</span><span>PRIVATE TRAVEL HUB · PLANS → JOURNEYS → MEMORIES</span></div></footer>
   </main>;
 }
 
+
 function Map({trips,filter,openTrip,theme}) {
-  const route=[[78.4867,17.385],[74.124,15.2993],[75.0967,15.3647]];
   const shown=trips.filter(t=>filter==="all"||effectiveStatus(t)===filter);
   const light=theme==="light";
+  const [mode,setMode]=useState("india");
   const [zoom,setZoom]=useState(1);
   const [center,setCenter]=useState([79,23.5]);
   const [selectedTrip,setSelectedTrip]=useState(null);
-
-  const selectTrip=(trip,e)=>{
-    e?.stopPropagation?.();
-    setSelectedTrip(trip);
-  };
-
-  const goToTrip=(trip)=>{
-    setSelectedTrip(null);
-    openTrip(trip);
-  };
-
+  const resetView=()=>{if(mode==="india"){setZoom(1);setCenter([79,23.5]);}else{setZoom(.92);setCenter([15,20]);}setSelectedTrip(null);};
+  const switchMode=m=>{setMode(m);setSelectedTrip(null);if(m==="india"){setZoom(1);setCenter([79,23.5]);}else{setZoom(.92);setCenter([15,20]);}};
+  const selectTrip=(trip,e)=>{e?.stopPropagation?.();setSelectedTrip(trip);};
+  const goToTrip=trip=>{setSelectedTrip(null);openTrip(trip);};
   return <div className="map-wrap">
-    <div className="map-caption"><span>INDIA · INTERACTIVE TRAVEL MAP</span><span>DRAG · WHEEL / PINCH · CLICK</span></div>
-
-    <div className="map-tools">
-      <button type="button" aria-label="Zoom in" onClick={()=>setZoom(z=>Math.min(7,z+.35))}>+</button>
-      <button type="button" aria-label="Zoom out" onClick={()=>setZoom(z=>Math.max(.85,z-.35))}>−</button>
-      <button type="button" onClick={()=>{setZoom(1);setCenter([79,23.5]);setSelectedTrip(null)}}>Reset</button>
-    </div>
-
+    <div className="map-caption"><span>{mode==="india"?"INDIA · STATE MAP":"WORLD · TRAVEL MAP"}</span><span>DRAG · WHEEL / PINCH · CLICK</span></div>
+    <div className="map-switch"><button className={mode==="india"?"active":""} onClick={()=>switchMode("india")}>🇮🇳 India</button><button className={mode==="world"?"active":""} onClick={()=>switchMode("world")}>🌍 World</button></div>
+    <div className="map-tools"><button type="button" onClick={()=>setZoom(z=>Math.min(8,z+.35))}>+</button><button type="button" onClick={()=>setZoom(z=>Math.max(.55,z-.35))}>−</button><button type="button" onClick={resetView}>Reset</button></div>
     {selectedTrip&&<div className="map-popup" role="dialog" aria-label={selectedTrip.name}>
-      <button type="button" className="map-popup-close" aria-label="Close trip details" onClick={()=>setSelectedTrip(null)}>×</button>
-      <div className="map-popup-icon">{selectedTrip.icon}</div>
-      <div className="map-popup-body">
+      <button type="button" className="map-popup-close" onClick={()=>setSelectedTrip(null)}>×</button>
+      <div className="map-popup-icon">{selectedTrip.icon}</div><div className="map-popup-body">
         <div className="map-popup-status" style={{color:STATUS[effectiveStatus(selectedTrip)]?.color}}>{STATUS[effectiveStatus(selectedTrip)]?.label}</div>
-        <h3>{selectedTrip.name}</h3>
-        <p>{selectedTrip.place}</p>
-        <div className="map-popup-meta">
-          <span>📅 {dateText(selectedTrip.startDate)}</span>
-          <span>💰 ₹{Number(selectedTrip.budget||0).toLocaleString("en-IN")}</span>
-          <span>👥 {(selectedTrip.members||[]).length}/{selectedTrip.capacity||0} crew</span>
-        </div>
-        <small>{selectedTrip.summary}</small>
-        <button type="button" className="map-popup-open" onClick={()=>goToTrip(selectedTrip)}>Open trip details →</button>
+        <h3>{selectedTrip.name}</h3><p>{selectedTrip.place}{selectedTrip.state?" · "+selectedTrip.state:""}{selectedTrip.country&&selectedTrip.country!=="India"?" · "+selectedTrip.country:""}</p>
+        <div className="map-popup-meta"><span>📅 {dateRangeText(selectedTrip)}</span><span>💰 ₹{Number(selectedTrip.budget||0).toLocaleString("en-IN")}</span><span>👥 {(selectedTrip.members||[]).length}/{selectedTrip.capacity||0} crew</span></div>
+        <small>{selectedTrip.summary}</small><button type="button" className="map-popup-open" onClick={()=>goToTrip(selectedTrip)}>Open trip details →</button>
       </div>
     </div>}
-
-    <ComposableMap
-      projection="geoMercator"
-      projectionConfig={{scale:820,center:[79,24]}}
-      className="map"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      <ZoomableGroup
-        center={center}
-        zoom={zoom}
-        minZoom={0.85}
-        maxZoom={7}
-        translateExtent={[[0,0],[1000,700]]}
-        onMoveEnd={({coordinates,zoom})=>{
-          setCenter(coordinates);
-          setZoom(zoom);
-        }}
-      >
-        <Geographies geography="https://raw.githubusercontent.com/AbhinavSwami28/india-official-geojson/main/india-states.topojson">
-          {({geographies})=>geographies.map(g=>{
-            const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");
-            const isJk=/Jammu|Kashmir/i.test(name);
-            const isLadakh=/Ladakh/i.test(name);
-            return <Geography
-              key={g.rsmKey}
-              geography={g}
-              fill={isJk||isLadakh?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")}
-              stroke={light?"#71877b":"#6e8579"}
-              strokeWidth={isJk||isLadakh?1.05:.7}
-              className="india-state"
-              onClick={()=>setSelectedTrip(null)}
-              style={{outline:"none",cursor:"grab"}}
-            />;
-          })}
-        </Geographies>
-
-        <Line from={route[0]} to={route[1]} stroke="#6b8579" strokeWidth={1.2} strokeDasharray="4 5"/>
-        <Line from={route[1]} to={route[2]} stroke="#6b8579" strokeWidth={1.2} strokeDasharray="4 5"/>
-
-        {shown.map(t=>{
-          const status=effectiveStatus(t);
-          const s=STATUS[status];
-          return <Marker
-            key={t.id}
-            coordinates={t.coords}
-            onClick={(e)=>selectTrip(t,e)}
-            onDoubleClick={(e)=>goToTrip(t)}
-            style={{cursor:"pointer"}}
-          >
-            <g className="marker-hit" role="button" aria-label={"Show "+t.name+" details"}>
-              <circle r="23" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
-              <circle r="12" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/>
-              <circle r="5" fill={s.color}/>
-            </g>
-            <text textAnchor="middle" y="34" className="marker-label">{t.short}</text>
-          </Marker>;
-        })}
+    <ComposableMap projection={mode==="india"?"geoMercator":"geoEqualEarth"} projectionConfig={mode==="india"?{scale:820,center:[79,24]}:{scale:155,center:[0,10]}} className="map" preserveAspectRatio="xMidYMid meet">
+      <ZoomableGroup center={center} zoom={zoom} minZoom={mode==="india"?.75:.55} maxZoom={8} translateExtent={[[0,0],[1000,700]]} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}}>
+        {mode==="india" ? <Geographies geography="https://raw.githubusercontent.com/AbhinavSwami28/india-official-geojson/main/india-states.topojson">{({geographies})=>geographies.map(g=>{
+          const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");const special=/Jammu|Kashmir|Ladakh/i.test(name);
+          return <Geography key={g.rsmKey} geography={g} fill={special?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")} stroke={light?"#71877b":"#6e8579"} strokeWidth={special?1.05:.7} className="india-state" onClick={()=>setSelectedTrip(null)} style={{outline:"none",cursor:"grab"}}/>;
+        })}</Geographies> : <Geographies geography={world}>{({geographies})=>geographies.map(g=>{
+          const country=String(g.properties?.name||"");
+          return <Geography key={g.rsmKey} geography={g} fill={country==="India"?(light?"#d7e4da":"#263a34"):(light?"#edf1ed":"#16241f")} stroke={light?"#8a9b93":"#50665c"} strokeWidth={country==="India"?1.05:.55} className="world-country" onClick={()=>setSelectedTrip(null)} style={{outline:"none",cursor:"grab"}}/>;
+        })}</Geographies>}
+        {shown.map(t=>{const status=effectiveStatus(t),s=STATUS[status];if(mode==="india"&&t.country&&t.country!=="India")return null;return <Marker key={t.id} coordinates={t.coords} onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)} style={{cursor:"pointer"}}><g className="marker-hit" role="button"><circle r="23" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/><circle r="12" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/><circle r="5" fill={s.color}/></g><text textAnchor="middle" y="34" className="marker-label">{t.short}</text></Marker>;})}
       </ZoomableGroup>
     </ComposableMap>
-
-    <div className="map-note">🟢 completed · 🟠 upcoming · 🟣 wishlist · 🔵 ongoing · drag to pan · wheel/pinch to zoom · click a marker for details</div>
+    <div className="map-note">{mode==="india"?"🇮🇳 State boundaries · ":"🌍 Country boundaries · "}🟢 completed · 🟠 upcoming · 🟣 wishlist · 🔵 ongoing · drag · wheel/pinch · click marker for details</div>
   </div>;
 }
 function Home({trips,counts,filter,setFilter,openTrip,nearest,registrations,requests,theme}) {
-  return <section><div className="hero"><div className="hero-copy"><p className="eyebrow">A living map of where we've been & where we're going</p><h1>Every trip gets a<br/><em>place on the map.</em></h1><p className="hero-text">Trips, people, budgets, stories and memories — one shared travel space.</p><div className="legend">{Object.entries(STATUS).map(([k,s])=><button key={k} className={filter===k?"legend-item active":"legend-item"} onClick={()=>setFilter(filter===k?"all":k)}><i style={{"--dot":s.color}}/>{s.label}<b>{counts[k]}</b></button>)}</div></div><Map trips={trips} filter={filter} openTrip={openTrip} theme={theme}/></div>{nearest&&<section className="countdown"><div><p className="eyebrow">NEXT ADVENTURE</p><h2>{nearest.icon} {nearest.name}</h2><p>{dateText(nearest.startDate)} · {nearest.place}</p></div><strong>{daysUntil(nearest.startDate)}<small>DAYS TO GO</small></strong><div className="count-info"><b>{(registrations[nearest.id]||nearest.members).length}/{nearest.capacity}</b><span>going</span><b>₹{nearest.budget.toLocaleString("en-IN")}</b><span>budget</span></div><button className="primary" onClick={()=>openTrip(nearest)}>Open & register →</button></section>}<section className="trip-section"><div className="section-heading"><div><p className="eyebrow">THE JOURNEY</p><h2>Our trips</h2></div><div className="stats">{Object.entries(counts).map(([k,v])=><div key={k}><b>{v}</b><span>{k}</span></div>)}</div></div><div className="trip-grid">{trips.filter(t=>filter==="all"||t.status===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section><ApprovedUpdates requests={requests} trips={trips} openTrip={openTrip}/></section>;
+  return <section><div className="hero"><div className="hero-copy"><p className="eyebrow">A living map of where we've been & where we're going</p><h1>Every trip gets a<br/><em>place on the map.</em></h1><p className="hero-text">Trips, people, budgets, stories and memories — one shared travel space.</p><div className="legend">{Object.entries(STATUS).map(([k,s])=><button key={k} className={filter===k?"legend-item active":"legend-item"} onClick={()=>setFilter(filter===k?"all":k)}><i style={{"--dot":s.color}}/>{s.label}<b>{counts[k]}</b></button>)}</div></div><Map trips={trips} filter={filter} openTrip={openTrip} theme={theme}/></div>{nearest&&<section className="countdown"><div><p className="eyebrow">NEXT ADVENTURE</p><h2>{nearest.icon} {nearest.name}</h2><p>{dateText(nearest.startDate)} · {nearest.place}</p></div><strong>{daysUntil(nearest.startDate)}<small>DAYS TO GO</small></strong><div className="count-info"><b>{(registrations[nearest.id]||nearest.members).length}/{nearest.capacity}</b><span>going</span><b>₹{nearest.budget.toLocaleString("en-IN")}</b><span>budget</span></div><button className="primary" onClick={()=>openTrip(nearest)}>Open & register →</button></section>}<section className="trip-section"><div className="section-heading"><div><p className="eyebrow">THE JOURNEY</p><h2>Our trips</h2></div><div className="stats">{Object.entries(counts).map(([k,v])=><div key={k}><b>{v}</b><span>{k}</span></div>)}</div></div><div className="trip-grid">{trips.filter(t=>filter==="all"||effectiveStatus(t)===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section><ApprovedUpdates requests={requests} trips={trips} openTrip={openTrip}/></section>;
 }
 
 const TRIP_IMAGES = {
@@ -277,7 +263,7 @@ function TripCard({trip,click,requests=[]}) {
     <div className="trip-card-image"><img src={image} alt={trip.name}/><div className="trip-card-image-overlay"/></div>
     <div className="trip-card-top"><span className="trip-icon">{trip.icon}</span><span className="status-pill">{s.label}</span></div>
     <h3>{trip.name}</h3><p>{trip.place}</p>
-    <div className="trip-card-bottom">{dateText(trip.startDate)} <span>{approved.length?approved.length+" approved · ":""}View →</span></div>
+    <div className="trip-card-bottom">{dateRangeText(trip)} <span>{approved.length?approved.length+" approved · ":""}View →</span></div>
   </button>;
 }
 
@@ -317,7 +303,7 @@ function TripPage({trip,registrations,requests,application,setApplication,regist
   const pending=requests.filter(r=>r.status==="pending"&&String(r.tripId)===String(trip.id));
   const people=Array.from(new Set([...(registrations[trip.id]||trip.members),...approved.map(r=>r.name)]));
   const appliedCount=new Set([...approved,...pending].map(r=>r.phone||r.name)).size;
-  const completed=trip.status==="completed";
+  const completed=effectiveStatus(trip)==="completed";
   const itinerary=trip.itinerary||[
     {day:"01",title:"Arrival & first impressions",text:"Reach the destination, settle in and begin exploring together."},
     {day:"02",title:"Explore the highlights",text:"Our main experiences, food stops and places worth remembering."},
@@ -332,7 +318,7 @@ function TripPage({trip,registrations,requests,application,setApplication,regist
       <section className="itinerary-section"><div className="section-heading"><div><p className="eyebrow">THE STORY</p><h2>Our itinerary</h2></div><span className="section-note">DAY BY DAY</span></div><div className="itinerary">{itinerary.map((x,i)=><article className="itinerary-item" key={i}><span>{x.day}</span><div><b>{x.title}</b><p>{x.text}</p></div></article>)}</div></section>
       <TripMemoryStrip trip={trip}/>
       <section className="team-section"><div><p className="eyebrow">THE CREW</p><h2>People who made it a memory.</h2></div><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></section>
-    </>:<><div className="detail-grid"><article className="info-card">📍<b>LOCATION</b><h3>{trip.place}</h3><p>Route and day-by-day itinerary.</p></article><article className="info-card">💰<b>BUDGET</b><h3>₹{trip.budget.toLocaleString("en-IN")}</h3><p>Planned budget for the trip.</p></article><article className="info-card">👥<b>APPLIED</b><h3>{appliedCount} / {trip.capacity}</h3><p>People have applied. Names appear only after confirmation.</p></article></div>{trip.status==="upcoming"&&<section className="register-card"><div><p className="eyebrow">JOIN THIS TRIP</p><h2>Send for confirmation</h2><p>Apply with a few details. Your place is confirmed only after admin approval.</p><small>{appliedCount} applied · {Math.max(0,trip.capacity-appliedCount)} spots left</small></div><form className="register-form" onSubmit={e=>{e.preventDefault();register();}}><input value={application.name} onChange={e=>setApplication({...application,name:e.target.value})} placeholder="Full name" required/><input value={application.phone} onChange={e=>setApplication({...application,phone:e.target.value})} placeholder="Mobile number" required/><div className="two"><input value={application.age} onChange={e=>setApplication({...application,age:e.target.value})} type="number" min="13" max="100" placeholder="Age"/><input value={application.city} onChange={e=>setApplication({...application,city:e.target.value})} placeholder="City"/></div><textarea value={application.message} onChange={e=>setApplication({...application,message:e.target.value})} placeholder="Anything we should know? (optional)"/><button className="primary">Send for confirmation →</button></form></section>}<h2>Current crew</h2><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></>}
+    </>:<><div className="detail-grid"><article className="info-card">📍<b>LOCATION</b><h3>{trip.place}</h3><p>Route and day-by-day itinerary.</p></article><article className="info-card">💰<b>BUDGET</b><h3>₹{trip.budget.toLocaleString("en-IN")}</h3><p>Planned budget for the trip.</p></article><article className="info-card">👥<b>APPLIED</b><h3>{appliedCount} / {trip.capacity}</h3><p>People have applied. Names appear only after confirmation.</p></article></div>{["upcoming","ongoing"].includes(effectiveStatus(trip))&&<section className="register-card"><div><p className="eyebrow">JOIN THIS TRIP</p><h2>Send for confirmation</h2><p>Apply with a few details. Your place is confirmed only after admin approval.</p><small>{appliedCount} applied · {Math.max(0,trip.capacity-appliedCount)} spots left</small></div><form className="register-form" onSubmit={e=>{e.preventDefault();register();}}><input value={application.name} onChange={e=>setApplication({...application,name:e.target.value})} placeholder="Full name" required/><input value={application.phone} onChange={e=>setApplication({...application,phone:e.target.value})} placeholder="Mobile number" required/><div className="two"><input value={application.age} onChange={e=>setApplication({...application,age:e.target.value})} type="number" min="13" max="100" placeholder="Age"/><input value={application.city} onChange={e=>setApplication({...application,city:e.target.value})} placeholder="City"/></div><textarea value={application.message} onChange={e=>setApplication({...application,message:e.target.value})} placeholder="Anything we should know? (optional)"/><button className="primary">Send for confirmation →</button></form></section>}<h2>Current crew</h2><div className="people">{people.map((p,i)=><div className="person" key={i}><span>{p[0]}</span><b>{p}</b>{i===0&&<small>organizer</small>}</div>)}</div></>}
   </section>;
 }
 function TripMemoryStrip({trip}) {

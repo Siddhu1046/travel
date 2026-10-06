@@ -230,7 +230,7 @@ function Map({trips,filter,openTrip,theme}) {
       </div>
     </div>}
     <ComposableMap projection={mode==="india"?"geoMercator":"geoEqualEarth"} projectionConfig={mode==="india"?{scale:820,center:[79,24]}:{scale:155,center:[0,10]}} className="map" preserveAspectRatio="xMidYMid meet">
-      <ZoomableGroup center={center} zoom={zoom} minZoom={mode==="india"?.75:.55} maxZoom={8} translateExtent={[[0,0],[1000,700]]} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}}>
+      <ZoomableGroup center={center} zoom={zoom} minZoom={mode==="india"?.75:.55} maxZoom={8} onMove={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}}>
         {mode==="india" ? <Geographies geography="https://raw.githubusercontent.com/AbhinavSwami28/india-official-geojson/main/india-states.topojson">{({geographies})=>geographies.map(g=>{
           const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");const special=/Jammu|Kashmir|Ladakh/i.test(name);
           return <Geography key={g.rsmKey} geography={g} fill={special?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")} stroke={light?"#71877b":"#6e8579"} strokeWidth={special?1.05:.7} className="india-state" onClick={()=>setSelectedTrip(null)} style={{outline:"none",cursor:"grab"}}/>;
@@ -238,7 +238,7 @@ function Map({trips,filter,openTrip,theme}) {
           const country=String(g.properties?.name||"");
           return <Geography key={g.rsmKey} geography={g} fill={country==="India"?(light?"#d7e4da":"#263a34"):(light?"#edf1ed":"#16241f")} stroke={light?"#8a9b93":"#50665c"} strokeWidth={country==="India"?1.05:.55} className="world-country" onClick={()=>setSelectedTrip(null)} style={{outline:"none",cursor:"grab"}}/>;
         })}</Geographies>}
-        {shown.map(t=>{const status=effectiveStatus(t),s=STATUS[status];if(mode==="india"&&t.country&&t.country!=="India")return null;return <Marker key={t.id} coordinates={t.coords} onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)} style={{cursor:"pointer"}}><g className="marker-hit" role="button"><circle r="23" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/><circle r="12" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/><circle r="5" fill={s.color}/></g><text textAnchor="middle" y="34" className="marker-label">{t.short}</text></Marker>;})}
+        {shown.map(t=>{const status=effectiveStatus(t),s=STATUS[status];if(mode==="india"&&t.country&&t.country!=="India")return null;return <Marker key={t.id} coordinates={t.coords} onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)} style={{cursor:"pointer",pointerEvents:"all"}}><g className="marker-hit" role="button" tabIndex="0" onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)}><circle r="27" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/><circle r="13" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/><circle r="5" fill={s.color}/></g><text textAnchor="middle" y="34" className="marker-label">{t.short}</text></Marker>;})}
       </ZoomableGroup>
     </ComposableMap>
     <div className="map-note">{mode==="india"?"🇮🇳 State boundaries · ":"🌍 Country boundaries · "}🟢 completed · 🟠 upcoming · 🟣 wishlist · 🔵 ongoing · drag · wheel/pinch · click marker for details</div>
@@ -278,20 +278,42 @@ function ItineraryEditor({initial}) {
 }
 
 function CalendarPage({trips,openTrip,theme}) {
-  const [cursor,setCursor]=useState(new Date());
+  const today=new Date();
+  const [cursor,setCursor]=useState(new Date(today.getFullYear(),today.getMonth(),1));
+  const [jumpDate,setJumpDate]=useState("");
   const year=cursor.getFullYear(), month=cursor.getMonth();
   const first=new Date(year,month,1), start=(first.getDay()+6)%7, days=new Date(year,month+1,0).getDate();
   const cells=Array.from({length:start+days},(_,i)=>i<start?null:i-start+1);
   const key=d=>d?new Date(d+"T00:00:00").toISOString().slice(0,10):"";
+  const monthNames=Array.from({length:12},(_,i)=>new Intl.DateTimeFormat("en-IN",{month:"long"}).format(new Date(2020,i,1)));
+  const years=Array.from(new Set([today.getFullYear()-5,today.getFullYear()-4,today.getFullYear()-3,today.getFullYear()-2,today.getFullYear()-1,today.getFullYear(),today.getFullYear()+1,today.getFullYear()+2,today.getFullYear()+3,...trips.flatMap(t=>[t.startDate,t.endDate,...(t.possibleDates||[])]).filter(Boolean).map(d=>Number(String(d).slice(0,4)))] )).sort((a,b)=>a-b);
   const events=[];
   trips.forEach(t=>{
     if(t.startDate){const s=new Date(t.startDate+"T00:00:00"),e=new Date((t.endDate||t.startDate)+"T00:00:00");for(let d=1;d<=days;d++){const x=new Date(year,month,d);if(x>=s&&x<=e)events.push({day:d,trip:t,possible:false});}}
     (t.possibleDates||[]).forEach(d=>{if(key(d).slice(0,7)===`${year}-${String(month+1).padStart(2,"0")}`)events.push({day:Number(d.slice(8,10)),trip:t,possible:true});});
   });
   const byDay=d=>events.filter(e=>e.day===d);
-  return <section className="page calendar-page"><div className="calendar-head"><div><p className="eyebrow">TRAVEL CALENDAR</p><h1>When we go. When we might go.</h1><p className="hero-text">Completed journeys, confirmed adventures and possible dates for the trips still on our wishlist.</p></div><div className="calendar-nav"><button onClick={()=>setCursor(new Date(year,month-1,1))}>←</button><b>{new Intl.DateTimeFormat("en-IN",{month:"long",year:"numeric"}).format(cursor)}</b><button onClick={()=>setCursor(new Date(year,month+1,1))}>→</button></div></div><div className="calendar-legend"><span><i className="cal-dot completed"/>Completed</span><span><i className="cal-dot upcoming"/>Upcoming</span><span><i className="cal-dot wishlist"/>Possible date</span></div><div className="calendar-grid">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}{cells.map((d,i)=><div className={"calendar-cell "+(!d?"empty-cell":"")} key={i}>{d&&<><b>{d}</b>{byDay(d).map((e,j)=><button key={j} className={"calendar-event "+(e.possible?"possible":e.trip.status)} onClick={()=>openTrip(e.trip)}><span>{e.trip.icon}</span>{e.trip.name}</button>)}</>}</div>)}</div></section>;
+  const changeMonth=delta=>setCursor(new Date(year,month+delta,1));
+  const goToday=()=>setCursor(new Date(today.getFullYear(),today.getMonth(),1));
+  const applyJump=()=>{if(!jumpDate)return;const d=new Date(jumpDate+"T00:00:00");if(!Number.isNaN(d.getTime()))setCursor(new Date(d.getFullYear(),d.getMonth(),1));};
+  return <section className="page calendar-page">
+    <div className="calendar-head">
+      <div><p className="eyebrow">TRAVEL CALENDAR</p><h1>When we go. When we might go.</h1><p className="hero-text">A proper month calendar for every journey, plan and possible date. Jump to any date instantly.</p></div>
+      <div className="calendar-nav">
+        <button type="button" onClick={()=>changeMonth(-1)} aria-label="Previous month">←</button>
+        <select value={month} onChange={e=>setCursor(new Date(year,Number(e.target.value),1))} aria-label="Choose month">{monthNames.map((m,i)=><option key={m} value={i}>{m}</option>)}</select>
+        <select value={year} onChange={e=>setCursor(new Date(Number(e.target.value),month,1))} aria-label="Choose year">{years.map(y=><option key={y} value={y}>{y}</option>)}</select>
+        <button type="button" onClick={()=>changeMonth(1)} aria-label="Next month">→</button>
+        <button type="button" className="today-btn" onClick={goToday}>Today</button>
+      </div>
+    </div>
+    <div className="calendar-jump">
+      <span>JUMP TO DATE</span><input type="date" value={jumpDate} onChange={e=>setJumpDate(e.target.value)} aria-label="Jump to a date"/><button type="button" onClick={applyJump}>Go →</button><button type="button" onClick={goToday}>Today</button><b>{new Intl.DateTimeFormat("en-IN",{month:"long",year:"numeric"}).format(cursor)}</b>
+    </div>
+    <div className="calendar-legend"><span><i className="cal-dot completed"/>Completed</span><span><i className="cal-dot upcoming"/>Upcoming</span><span><i className="cal-dot wishlist"/>Possible date</span></div>
+    <div className="calendar-grid">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}{cells.map((d,i)=><div className={"calendar-cell "+(!d?"empty-cell":"")} key={i}>{d&&<><b>{d}</b>{byDay(d).map((e,j)=><button key={j} className={"calendar-event "+(e.possible?"possible":effectiveStatus(e.trip))} onClick={()=>openTrip(e.trip)}><span>{e.trip.icon}</span>{e.trip.name}</button>)}</>}</div>)}</div>
+  </section>;
 }
-
 function ApprovedUpdates({requests,trips,openTrip}) {
   const approved=requests.filter(r=>r.status==="approved").slice(0,6);
   if(!approved.length)return null;

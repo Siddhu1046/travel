@@ -158,25 +158,106 @@ function Map({trips,filter,openTrip,theme}) {
   const light=theme==="light";
   const [zoom,setZoom]=useState(1);
   const [center,setCenter]=useState([79,23.5]);
-  const [hovered,setHovered]=useState(null);
+  const [selectedTrip,setSelectedTrip]=useState(null);
+
+  const selectTrip=(trip,e)=>{
+    e?.stopPropagation?.();
+    setSelectedTrip(trip);
+  };
+
+  const goToTrip=(trip)=>{
+    setSelectedTrip(null);
+    openTrip(trip);
+  };
+
   return <div className="map-wrap">
-    <div className="map-caption"><span>INDIA · INTERACTIVE TRAVEL MAP</span><span>DRAG · SCROLL · CLICK</span></div>
-    <div className="map-tools"><button onClick={()=>setZoom(z=>Math.min(7,z+.3))}>+</button><button onClick={()=>setZoom(z=>Math.max(.85,z-.3))}>−</button><button onClick={()=>{setZoom(1);setCenter([79,23.5])}}>Reset</button></div>
-    {hovered&&<div className="map-tooltip"><span>{hovered.icon}</span><div><b>{hovered.name}</b><small>{STATUS[effectiveStatus(hovered)].label} · {hovered.place}</small></div></div>}
-    <ComposableMap projection="geoMercator" projectionConfig={{scale:820,center:[79,24]}} className="map" preserveAspectRatio="xMidYMid meet">
-      <ZoomableGroup center={center} zoom={zoom} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}} minZoom={0.85} maxZoom={7}>
-        <Geographies geography="https://raw.githubusercontent.com/AbhinavSwami28/india-official-geojson/main/india-states.topojson">{({geographies})=>geographies.map(g=>{const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");const isJk=/Jammu|Kashmir/i.test(name);const isLadakh=/Ladakh/i.test(name);return <Geography key={g.rsmKey} geography={g} fill={isJk||isLadakh?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")} stroke={light?"#71877b":"#6e8579"} strokeWidth={isJk||isLadakh?1.05:.7} style={{default:{outline:"none"},hover:{outline:"none",fill:light?"#d2e2d6":"#29463c"},pressed:{outline:"none"}}}/>})}</Geographies>
+    <div className="map-caption"><span>INDIA · INTERACTIVE TRAVEL MAP</span><span>DRAG · WHEEL / PINCH · CLICK</span></div>
+
+    <div className="map-tools">
+      <button type="button" aria-label="Zoom in" onClick={()=>setZoom(z=>Math.min(7,z+.35))}>+</button>
+      <button type="button" aria-label="Zoom out" onClick={()=>setZoom(z=>Math.max(.85,z-.35))}>−</button>
+      <button type="button" onClick={()=>{setZoom(1);setCenter([79,23.5]);setSelectedTrip(null)}}>Reset</button>
+    </div>
+
+    {selectedTrip&&<div className="map-popup" role="dialog" aria-label={selectedTrip.name}>
+      <button type="button" className="map-popup-close" aria-label="Close trip details" onClick={()=>setSelectedTrip(null)}>×</button>
+      <div className="map-popup-icon">{selectedTrip.icon}</div>
+      <div className="map-popup-body">
+        <div className="map-popup-status" style={{color:STATUS[effectiveStatus(selectedTrip)]?.color}}>{STATUS[effectiveStatus(selectedTrip)]?.label}</div>
+        <h3>{selectedTrip.name}</h3>
+        <p>{selectedTrip.place}</p>
+        <div className="map-popup-meta">
+          <span>📅 {dateText(selectedTrip.startDate)}</span>
+          <span>💰 ₹{Number(selectedTrip.budget||0).toLocaleString("en-IN")}</span>
+          <span>👥 {(selectedTrip.members||[]).length}/{selectedTrip.capacity||0} crew</span>
+        </div>
+        <small>{selectedTrip.summary}</small>
+        <button type="button" className="map-popup-open" onClick={()=>goToTrip(selectedTrip)}>Open trip details →</button>
+      </div>
+    </div>}
+
+    <ComposableMap
+      projection="geoMercator"
+      projectionConfig={{scale:820,center:[79,24]}}
+      className="map"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <ZoomableGroup
+        center={center}
+        zoom={zoom}
+        minZoom={0.85}
+        maxZoom={7}
+        translateExtent={[[0,0],[1000,700]]}
+        onMoveEnd={({coordinates,zoom})=>{
+          setCenter(coordinates);
+          setZoom(zoom);
+        }}
+      >
+        <Geographies geography="https://raw.githubusercontent.com/AbhinavSwami28/india-official-geojson/main/india-states.topojson">
+          {({geographies})=>geographies.map(g=>{
+            const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");
+            const isJk=/Jammu|Kashmir/i.test(name);
+            const isLadakh=/Ladakh/i.test(name);
+            return <Geography
+              key={g.rsmKey}
+              geography={g}
+              fill={isJk||isLadakh?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")}
+              stroke={light?"#71877b":"#6e8579"}
+              strokeWidth={isJk||isLadakh?1.05:.7}
+              className="india-state"
+              onClick={()=>setSelectedTrip(null)}
+              style={{outline:"none",cursor:"grab"}}
+            />;
+          })}
+        </Geographies>
+
         <Line from={route[0]} to={route[1]} stroke="#6b8579" strokeWidth={1.2} strokeDasharray="4 5"/>
         <Line from={route[1]} to={route[2]} stroke="#6b8579" strokeWidth={1.2} strokeDasharray="4 5"/>
-        {shown.map(t=>{const s=STATUS[effectiveStatus(t)];return <Marker key={t.id} coordinates={t.coords} onClick={()=>openTrip(t)} onMouseEnter={()=>setHovered(t)} onMouseLeave={()=>setHovered(null)}>
-          <g className="marker-hit"><circle r="20" fill={s.soft} className={["upcoming","ongoing"].includes(effectiveStatus(t))?"pulse":""}/><circle r="10" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/><circle r="4" fill={s.color}/></g><text textAnchor="middle" y="31" className="marker-label">{t.short}</text>
-        </Marker>})}
+
+        {shown.map(t=>{
+          const status=effectiveStatus(t);
+          const s=STATUS[status];
+          return <Marker
+            key={t.id}
+            coordinates={t.coords}
+            onClick={(e)=>selectTrip(t,e)}
+            onDoubleClick={(e)=>goToTrip(t)}
+            style={{cursor:"pointer"}}
+          >
+            <g className="marker-hit" role="button" aria-label={"Show "+t.name+" details"}>
+              <circle r="23" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
+              <circle r="12" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/>
+              <circle r="5" fill={s.color}/>
+            </g>
+            <text textAnchor="middle" y="34" className="marker-label">{t.short}</text>
+          </Marker>;
+        })}
       </ZoomableGroup>
     </ComposableMap>
-    <div className="map-note">🟢 completed · 🟠 upcoming · 🟣 wishlist · 🔵 ongoing · scroll / pinch / drag to explore</div>
+
+    <div className="map-note">🟢 completed · 🟠 upcoming · 🟣 wishlist · 🔵 ongoing · drag to pan · wheel/pinch to zoom · click a marker for details</div>
   </div>;
 }
-
 function Home({trips,counts,filter,setFilter,openTrip,nearest,registrations,requests,theme}) {
   return <section><div className="hero"><div className="hero-copy"><p className="eyebrow">A living map of where we've been & where we're going</p><h1>Every trip gets a<br/><em>place on the map.</em></h1><p className="hero-text">Trips, people, budgets, stories and memories — one shared travel space.</p><div className="legend">{Object.entries(STATUS).map(([k,s])=><button key={k} className={filter===k?"legend-item active":"legend-item"} onClick={()=>setFilter(filter===k?"all":k)}><i style={{"--dot":s.color}}/>{s.label}<b>{counts[k]}</b></button>)}</div></div><Map trips={trips} filter={filter} openTrip={openTrip} theme={theme}/></div>{nearest&&<section className="countdown"><div><p className="eyebrow">NEXT ADVENTURE</p><h2>{nearest.icon} {nearest.name}</h2><p>{dateText(nearest.startDate)} · {nearest.place}</p></div><strong>{daysUntil(nearest.startDate)}<small>DAYS TO GO</small></strong><div className="count-info"><b>{(registrations[nearest.id]||nearest.members).length}/{nearest.capacity}</b><span>going</span><b>₹{nearest.budget.toLocaleString("en-IN")}</b><span>budget</span></div><button className="primary" onClick={()=>openTrip(nearest)}>Open & register →</button></section>}<section className="trip-section"><div className="section-heading"><div><p className="eyebrow">THE JOURNEY</p><h2>Our trips</h2></div><div className="stats">{Object.entries(counts).map(([k,v])=><div key={k}><b>{v}</b><span>{k}</span></div>)}</div></div><div className="trip-grid">{trips.filter(t=>filter==="all"||t.status===filter).map(t=><TripCard key={t.id} trip={t} click={()=>openTrip(t)} requests={requests}/>)}</div></section><ApprovedUpdates requests={requests} trips={trips} openTrip={openTrip}/></section>;
 }

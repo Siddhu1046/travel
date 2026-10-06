@@ -221,7 +221,7 @@ function ScaleAwareTripMarker({trip,status,light,selectTrip,goToTrip}) {
       <circle r={haloR} fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/>
       <circle r={ringR} fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth={Math.max(1.2,2.2*factor)}/>
       <circle r={coreR} fill={s.color}/>
-      <text textAnchor="middle" y={labelY} className="marker-label">{trip.short}</text>
+      <text textAnchor="middle" y={labelY} className="marker-label" style={{fontSize:`${Math.max(4,11*factor)}px`}}>{trip.short}</text>
     </g>
   </Marker>;
 }

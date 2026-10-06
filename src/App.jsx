@@ -403,6 +403,7 @@ export default function App() {
       source:"cloud",
       type:"trip-application",
       tripId:created.trip_id,
+      applicantId:created.applicant_id,
       destination:t.name,
       name:created.name,
       phone:created.phone,

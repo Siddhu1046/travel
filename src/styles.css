@@ -585,3 +585,116 @@
   .calendar-cell{min-height:92px;padding:6px}
   .calendar-event{font-size:8px}
 }
+
+
+/* Compact glass travel calendar */
+.calendar-page{
+  max-width:1180px;
+  padding-top:30px;
+  padding-bottom:55px;
+}
+.calendar-head{
+  align-items:center;
+  gap:22px;
+  margin-bottom:14px;
+}
+.calendar-head>div:first-child{flex:1}
+.calendar-head h1{
+  font-size:clamp(34px,4vw,54px);
+  line-height:.98;
+  margin-bottom:9px;
+  max-width:620px;
+}
+.calendar-head .hero-text{font-size:12px;line-height:1.55;max-width:580px}
+.calendar-nav{
+  padding:5px;
+  gap:3px;
+  border-radius:16px;
+  background:rgba(255,255,255,.20);
+  border:1px solid rgba(255,255,255,.45);
+  box-shadow:0 12px 35px rgba(30,55,48,.10),inset 0 1px 0 rgba(255,255,255,.65);
+  backdrop-filter:blur(20px) saturate(1.25);
+  -webkit-backdrop-filter:blur(20px) saturate(1.25);
+}
+.calendar-nav button,.calendar-nav select{height:34px;font-size:11px}
+.calendar-nav button{min-width:34px}
+.calendar-nav select{min-width:94px;padding:0 8px}
+.calendar-nav .today-btn{padding:0 11px}
+.calendar-jump{
+  max-width:100%;
+  margin:0 0 10px;
+  padding:7px 9px;
+  gap:6px;
+  border-radius:14px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.42);
+  box-shadow:0 10px 30px rgba(30,55,48,.07),inset 0 1px 0 rgba(255,255,255,.62);
+  backdrop-filter:blur(18px) saturate(1.2);
+  -webkit-backdrop-filter:blur(18px) saturate(1.2);
+}
+.calendar-jump input,.calendar-jump button{height:32px;font-size:11px}
+.calendar-jump>b{font-size:10px}
+.calendar-legend{
+  margin:0 0 8px;
+  gap:12px;
+  font-size:9px;
+}
+.calendar-grid{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.48);
+  background:rgba(255,255,255,.20);
+  box-shadow:0 22px 65px rgba(31,54,47,.10),inset 0 1px 0 rgba(255,255,255,.7);
+  backdrop-filter:blur(18px) saturate(1.15);
+  -webkit-backdrop-filter:blur(18px) saturate(1.15);
+}
+.calendar-weekday{
+  padding:9px 10px;
+  background:rgba(255,255,255,.18);
+  border-color:rgba(38,54,48,.08);
+}
+.calendar-cell{
+  min-height:88px;
+  padding:7px;
+  background:rgba(255,255,255,.22);
+  border-color:rgba(38,54,48,.08);
+}
+.empty-cell{background:rgba(255,255,255,.10)}
+.calendar-cell>b{font-size:9px}
+.calendar-event{
+  margin-top:5px;
+  padding:5px 6px;
+  border-radius:8px;
+  font-size:8px;
+  background:rgba(255,255,255,.30);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+}
+.calendar-event span{font-size:10px}
+.theme-dark .calendar-nav,.theme-dark .calendar-jump{
+  background:rgba(7,15,22,.48);
+  border-color:rgba(255,255,255,.12);
+  box-shadow:0 18px 55px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.theme-dark .calendar-grid{
+  background:rgba(7,15,22,.40);
+  border-color:rgba(255,255,255,.12);
+  box-shadow:0 24px 70px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.theme-dark .calendar-weekday{background:rgba(7,15,22,.46);border-color:rgba(255,255,255,.07)}
+.theme-dark .calendar-cell{background:rgba(7,15,22,.28);border-color:rgba(255,255,255,.07)}
+.theme-dark .empty-cell{background:rgba(7,15,22,.18)}
+.theme-dark .calendar-event{background:rgba(9,20,28,.48)}
+/* Keep map physically inside its viewport while retaining drag/pan */
+.map-wrap{overflow:hidden;overscroll-behavior:contain}
+.map-wrap .map{overscroll-behavior:contain}
+.map-wrap .rsm-zoomable-group{will-change:transform}
+@media(max-width:900px){
+  .calendar-page{padding-top:22px}
+  .calendar-head{align-items:flex-start}
+}
+@media(max-width:600px){
+  .calendar-head h1{font-size:36px}
+  .calendar-nav{width:100%}
+  .calendar-cell{min-height:76px;padding:5px}
+  .calendar-event{font-size:7px}
+}

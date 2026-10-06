@@ -98,7 +98,7 @@ const LOCATION_BY_TRIP={
 
 export default function App() {
   const [trips,setTrips] = useStore("travel-trips",INITIAL_TRIPS);
-  useEffect(()=>{setTrips(prev=>prev.map(t=>LOCATION_BY_TRIP[t.id]?{...t,...LOCATION_BY_TRIP[t.id]}:t));},[]);
+  useEffect(()=>{setTrips(prev=>prev.map(t=>{const known=LOCATION_BY_TRIP[t.id]||Object.entries(INDIA_LOCATIONS).map(([k,v])=>[k,v]).find(([k])=>String(t.name||"").toLowerCase().includes(k.toLowerCase()))?.[1];return known&&(!t.country||!t.state)?{...t,...known}:t;}));},[]);
   const [stories,setStories] = useStore("travel-stories",INITIAL_STORIES);
   const [media,setMedia] = useStore("travel-media",INITIAL_MEDIA);
   const [registrations,setRegistrations] = useStore("travel-registrations",{});

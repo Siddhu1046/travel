@@ -167,7 +167,7 @@ export default function App() {
   const [alertsOpen,setAlertsOpen] = useState(true);
 
   const [theme,setTheme] = useStore("travel-theme","dark");
-  const [story,setStory] = useState({title:"",text:"",tripId:""});
+  const [story,setStory] = useState({title:"",text:"",tripId:"",kind:"experience"});
 
   useEffect(()=>{
     let alive=true;
@@ -368,14 +368,22 @@ export default function App() {
   };
   const submitStory = e => {
     e.preventDefault();
-    if(!session) { setAuthMode("signin"); setAuthOpen(true); return pop("Sign in first to leave a memory."); }
-    if(!story.title.trim()||!story.text.trim()||!story.tripId) return pop("Choose the completed trip this memory belongs to.");
-    const trip=trips.find(t=>String(t.id)===String(story.tripId));
-    const s=effectiveStatus(trip||{});
-    const verified=(trip?.members||[]).includes("Siddhu") || (registrations[trip?.id]||[]).includes("Siddhu");
-    if(s!=="completed" || !verified) return pop("Only verified crew members can post memories for completed trips.");
-    setStories([{id:Date.now(),author:"Siddhu",tripId:story.tripId,title:story.title,text:story.text,status:"approved",date:new Date().toISOString().slice(0,10)},...stories]);
-    setStory({title:"",text:"",tripId:""}); pop("Memory pinned to the wall ✓");
+    if(!session) { setAuthMode("signin"); setAuthOpen(true); return pop("Sign in first to share your experience."); }
+    if(!story.title.trim()||!story.text.trim()) return pop("Add a title and tell us about your experience.");
+    const trip=story.tripId ? trips.find(t=>String(t.id)===String(story.tripId)) : null;
+    const nextStory={
+      id:Date.now(),
+      author:profile?.display_name||session.user?.email?.split("@")[0]||"Traveller",
+      tripId:story.tripId||"",
+      title:story.title.trim(),
+      text:story.text.trim(),
+      kind:"experience",
+      status:"approved",
+      date:new Date().toISOString().slice(0,10)
+    };
+    setStories([nextStory,...stories]);
+    setStory({title:"",text:"",tripId:"",kind:"experience"});
+    pop(trip ? "Experience shared on the wall ✓" : "Feedback shared on the wall ✓");
   };
   const approve = (id,status) => { setStories(stories.map(s=>s.id===id?{...s,status}:s)); pop(status==="approved"?"Story published.":"Story rejected."); };
   const submitRequest = e => {
@@ -701,7 +709,7 @@ function Stories({trips=[],stories,story,setStory,submit,positions={},setPositio
       <div>
         <p className="eyebrow">FROM THE CREW · MEMORY WALL</p>
         <h1>Leave something behind.</h1>
-        <p className="hero-text">Every trip leaves a story. Drag the notes around, explore the wall and add your own memory.</p>
+        <p className="hero-text">A place for memories, feedback and real travel experiences — whether they belong to a past trip, a future plan or the journey as a whole.</p>
       </div>
       <div className="wall-controls">
         <button onClick={()=>zoomAt(.15)}>+</button>
@@ -752,10 +760,13 @@ function Stories({trips=[],stories,story,setStory,submit,positions={},setPositio
         <p>Write something from a trip, a person, a place or a moment you never want to forget. Your note appears instantly. Admin can remove it or send it to moderation if needed.</p>
       </div>
       <form className="story-form wall-form" onSubmit={submit}>
-        <select value={story.tripId||""} onChange={e=>setStory({...story,tripId:e.target.value})}><option value="">Choose a completed trip</option>{trips.filter(t=>effectiveStatus(t)==="completed").map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
-        <input placeholder="Give your memory a title" value={story.title} onChange={e=>setStory({...story,title:e.target.value})}/>
-        <textarea placeholder="What happened? Tell the story..." value={story.text} onChange={e=>setStory({...story,text:e.target.value})}/>
-        <button className="primary">Pin directly to wall →</button>
+        <select value={story.tripId||""} onChange={e=>setStory({...story,tripId:e.target.value})}>
+          <option value="">General experience / feedback</option>
+          {trips.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <input placeholder="Give your experience a title" value={story.title} onChange={e=>setStory({...story,title:e.target.value})}/>
+        <textarea placeholder="Tell us what you loved, learned, disliked, discovered or want to see next..." value={story.text} onChange={e=>setStory({...story,text:e.target.value})}/>
+        <button className="primary">Share experience →</button>
       </form>
     </div>}
 

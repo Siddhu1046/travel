@@ -224,6 +224,65 @@ export default function App() {
   },[role]);
   useEffect(()=>{
     let alive=true;
+    const loadTripCommunityData=async()=>{
+      const {data:members,error:memberError}=await supabase
+        .from("trip_members")
+        .select("id,trip_id,user_id,member_name,is_verified,joined_at")
+        .eq("is_verified",true)
+        .order("joined_at",{ascending:true});
+      if(!alive)return;
+      if(memberError){
+        console.warn("Travel Hub: could not load verified crew.",memberError);
+      }else{
+        setTripMembers(members||[]);
+        setRegistrations(prev=>{
+          const next={...prev};
+          (members||[]).forEach(m=>{
+            const id=String(m.trip_id);
+            next[id]=Array.from(new Set([...(next[id]||[]),m.member_name]));
+          });
+          return next;
+        });
+      }
+
+      if(!session){
+        setCloudApplications([]);
+        return;
+      }
+
+      let query=supabase
+        .from("trip_applications")
+        .select("*")
+        .order("submitted_at",{ascending:false});
+      if(role!=="admin") query=query.eq("applicant_id",session.user.id);
+      const {data:apps,error:appError}=await query;
+      if(!alive)return;
+      if(appError){
+        console.warn("Travel Hub: could not load trip applications.",appError);
+        return;
+      }
+      setCloudApplications((apps||[]).map(a=>({
+        id:a.id,
+        source:"cloud",
+        type:"trip-application",
+        tripId:a.trip_id,
+        applicantId:a.applicant_id,
+        destination:trips.find(t=>String(t.id)===String(a.trip_id))?.name||"Trip",
+        name:a.name,
+        phone:a.phone,
+        age:a.age,
+        city:a.city,
+        message:a.message,
+        status:a.status,
+        submittedAt:a.submitted_at,
+        reviewedAt:a.reviewed_at
+      })));
+    };
+    loadTripCommunityData();
+    return ()=>{alive=false;};
+  },[session,role,trips]);
+  useEffect(()=>{
+    let alive=true;
     const loadSession=async()=>{
       const {data:{session:current}}=await supabase.auth.getSession();
       if(!alive)return;

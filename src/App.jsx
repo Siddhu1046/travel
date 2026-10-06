@@ -331,16 +331,10 @@ function CalendarPage({trips,openTrip,theme}) {
   return <section className="page calendar-page">
     <div className="calendar-head">
       <div><p className="eyebrow">TRAVEL CALENDAR</p><h1>When we go. When we might go.</h1><p className="hero-text">A proper month calendar for every journey, plan and possible date. Jump to any date instantly.</p></div>
-      <div className="calendar-nav">
-        <button type="button" onClick={()=>changeMonth(-1)} aria-label="Previous month">←</button>
-        <select value={month} onChange={e=>setCursor(new Date(year,Number(e.target.value),1))} aria-label="Choose month">{monthNames.map((m,i)=><option key={m} value={i}>{m}</option>)}</select>
-        <select value={year} onChange={e=>setCursor(new Date(Number(e.target.value),month,1))} aria-label="Choose year">{years.map(y=><option key={y} value={y}>{y}</option>)}</select>
-        <button type="button" onClick={()=>changeMonth(1)} aria-label="Next month">→</button>
-        <button type="button" className="today-btn" onClick={goToday}>Today</button>
-      </div>
+  
     </div>
     <div className="calendar-jump">
-      <span>JUMP TO DATE</span><input type="date" value={jumpDate} onChange={e=>setJumpDate(e.target.value)} aria-label="Jump to a date"/><button type="button" onClick={applyJump}>Go →</button>
+      <span>JUMP TO DATE</span><input type="date" value={jumpDate} onChange={e=>setJumpDate(e.target.value)} aria-label="Jump to a date"/><button type="button" onClick={applyJump}>Go →</button><button type="button" className="today-btn" onClick={goToday}>Today</button>
     </div>
     <div className="calendar-legend"><span><i className="cal-dot completed"/>Completed</span><span><i className="cal-dot upcoming"/>Upcoming</span><span><i className="cal-dot wishlist"/>Possible date</span></div>
     <div className="calendar-grid">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}{cells.map((d,i)=><div className={"calendar-cell "+(!d?"empty-cell":"")} key={i}>{d&&<><b>{d}</b>{byDay(d).map((e,j)=><button key={j} className={"calendar-event "+(e.possible?"possible":effectiveStatus(e.trip))} onClick={()=>openTrip(e.trip)}><span>{e.trip.icon}</span>{e.trip.name}</button>)}</>}</div>)}</div>

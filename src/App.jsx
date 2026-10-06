@@ -148,6 +148,8 @@ export default function App() {
   const [media,setMedia] = useStore("travel-media",INITIAL_MEDIA);
   const [registrations,setRegistrations] = useStore("travel-registrations",{});
   const [requests,setRequests] = useStore("travel-requests",[]);
+  const [cloudApplications,setCloudApplications] = useState([]);
+  const [tripMembers,setTripMembers] = useState([]);
   const [wallPositions,setWallPositions] = useStore("travel-wall-positions",{});
   const [page,setPage] = useStore("travel-page","home");
   const [session,setSession] = useState(null);
@@ -331,6 +333,7 @@ export default function App() {
   };
   const [requestOpen,setRequestOpen] = useState(false);
   const [request,setRequest] = useState({name:"",destination:"",tripId:"",date:"",people:"2",instagram:"",phone:"",message:""});
+  const adminRequests = useMemo(()=>[...requests.filter(r=>r.type!=="trip-application"),...cloudApplications], [requests,cloudApplications]);
   const counts = useMemo(() => trips.reduce((a,t)=>{const s=effectiveStatus(t);if(a[s]===undefined)a[s]=0;a[s]++;return a;},{completed:0,upcoming:0,ongoing:0,wishlist:0,cancelled:0}),[trips]);
   const upcoming = trips.filter(t=>["upcoming","ongoing"].includes(effectiveStatus(t))&&t.startDate).sort((a,b)=>a.startDate.localeCompare(b.startDate));
   const nearest = upcoming[0];
@@ -357,12 +360,59 @@ export default function App() {
     }
     pop(t.name+" cancelled and synced ✓");
   };
-  const register = t => {
+  const register = async t => {
     if(!session) { setAuthMode("signin"); setAuthOpen(true); return pop("Sign in first to apply for a trip."); }
+    if(!["upcoming","ongoing"].includes(effectiveStatus(t))) return pop("Applications are only open for upcoming or ongoing trips.");
     if(!application.name.trim()||!application.phone.trim()) return pop("Name and phone number are required.");
-    const already=requests.some(r=>String(r.tripId)===String(t.id)&&r.phone===application.phone&&r.status!=="rejected");
-    if(already) return pop("You already applied for this trip.");
-    setRequests([{id:Date.now(),type:"trip-application",tripId:t.id,destination:t.name,name:application.name.trim(),phone:application.phone.trim(),age:application.age,city:application.city,message:application.message,status:"pending",submittedAt:new Date().toISOString()},...requests]);
+
+    const going=(registrations[t.id]||t.members||[]).length;
+    if(t.capacity && going>=Number(t.capacity)) return pop("This trip is full.");
+
+    const {data:existing,error:existingError}=await supabase
+      .from("trip_applications")
+      .select("id,status")
+      .eq("trip_id",String(t.id))
+      .eq("applicant_id",session.user.id)
+      .in("status",["pending","approved"])
+      .limit(1);
+    if(existingError){ console.error(existingError); return pop("Could not check your existing application."); }
+    if(existing?.length) return pop("You already applied for this trip.");
+
+    const payload={
+      trip_id:String(t.id),
+      applicant_id:session.user.id,
+      name:application.name.trim(),
+      phone:application.phone.trim(),
+      age:application.age?Number(application.age):null,
+      city:application.city.trim(),
+      message:application.message.trim()
+    };
+    const {data:created,error}=await supabase
+      .from("trip_applications")
+      .insert(payload)
+      .select("*")
+      .single();
+
+    if(error){
+      console.error(error);
+      return pop(error.message||"Could not send the application.");
+    }
+
+    const mapped={
+      id:created.id,
+      source:"cloud",
+      type:"trip-application",
+      tripId:created.trip_id,
+      destination:t.name,
+      name:created.name,
+      phone:created.phone,
+      age:created.age,
+      city:created.city,
+      message:created.message,
+      status:created.status,
+      submittedAt:created.submitted_at
+    };
+    setCloudApplications(prev=>[mapped,...prev.filter(x=>x.id!==mapped.id)]);
     setApplication({name:"",phone:"",age:"",city:"",message:""});
     pop("Application sent for confirmation ✓");
   };
@@ -393,8 +443,58 @@ export default function App() {
     setRequest({name:"",destination:"",tripId:"",date:"",people:"2",instagram:"",phone:"",message:""});
     setRequestOpen(false); pop("Trip request received — admin will review it.");
   };
-  const reviewRequest = (id,status) => {
-    const target=requests.find(r=>r.id===id);
+  const reviewRequest = async (id,status) => {
+    const target=adminRequests.find(r=>String(r.id)===String(id));
+    if(!target) return;
+
+    if(target.source==="cloud"){
+      if(status==="approved"){
+        const {error:memberError}=await supabase
+          .from("trip_members")
+          .upsert({
+            trip_id:String(target.tripId),
+            user_id:target.applicantId||null,
+            member_name:target.name.trim(),
+            is_verified:true
+          },{onConflict:"trip_id,user_id"});
+        if(memberError){
+          console.error(memberError);
+          return pop("Could not add the approved traveller to the crew.");
+        }
+      }
+
+      const {error}=await supabase
+        .from("trip_applications")
+        .update({
+          status,
+          reviewed_at:new Date().toISOString(),
+          reviewed_by:session?.user?.id||null
+        })
+        .eq("id",target.id);
+
+      if(error){
+        console.error(error);
+        return pop("Application status could not be updated.");
+      }
+
+      setCloudApplications(prev=>prev.map(r=>String(r.id)===String(id)?{...r,status}:r));
+      if(status==="approved"){
+        setTripMembers(prev=>[...prev.filter(m=>!(String(m.trip_id)===String(target.tripId)&&String(m.user_id||"")===String(target.applicantId||""))),{
+          id:"local-"+id,
+          trip_id:String(target.tripId),
+          user_id:target.applicantId||null,
+          member_name:target.name.trim(),
+          is_verified:true
+        }]);
+        setRegistrations(prev=>({
+          ...prev,
+          [target.tripId]:Array.from(new Set([...(prev[target.tripId]||[]),target.name.trim()]))
+        }));
+      }
+      pop(status==="approved"?"Application approved — traveller added to the crew ✓":"Application rejected.");
+      return;
+    }
+
     setRequests(requests.map(r=>r.id===id?{...r,status}:r));
     if(status==="approved" && target?.tripId){
       const list=registrations[target.tripId]||[];
@@ -402,6 +502,17 @@ export default function App() {
       setRegistrations({...registrations,[target.tripId]:Array.from(new Set([...list,...approvedNames]))});
     }
     pop(status==="approved"?"Trip request approved and added to the trip ✓":"Trip request rejected.");
+  };
+  const deleteRequest = async r => {
+    if(r?.source==="cloud"){
+      const {error}=await supabase.from("trip_applications").delete().eq("id",r.id);
+      if(error){ console.error(error); return pop("Could not delete the application."); }
+      setCloudApplications(prev=>prev.filter(x=>String(x.id)!==String(r.id)));
+      pop("Application removed.");
+      return;
+    }
+    setRequests(prev=>prev.filter(x=>x.id!==r.id));
+    pop("Request removed.");
   };
   const saveTrip = async e => {
     e.preventDefault(); const f=new FormData(e.currentTarget);
@@ -442,7 +553,7 @@ export default function App() {
     {page==="trip"&&selected&&<TripPage trip={selected} registrations={registrations} requests={requests} application={application} setApplication={setApplication} register={()=>register(selected)} back={()=>setPage("trips")}/>}
     {page==="memories"&&<Gallery media={media} role={role} setMedia={setMedia}/>}
     {page==="stories"&&<Stories trips={trips} stories={stories.filter(s=>s.status==="approved")} story={story} setStory={setStory} submit={submitStory} positions={wallPositions} setPositions={setWallPositions} onEdit={s=>{const title=prompt("Edit memory title",s.title);if(title===null)return;const text=prompt("Edit memory text",s.text);if(text===null)return;setStories(stories.map(x=>x.id===s.id?{...x,title,text}:x));pop("Memory updated ✓");}} onRemove={s=>{if(confirm("Remove your memory from the wall?"))setStories(stories.filter(x=>x.id!==s.id));}}/>}
-    {page==="admin"&&role==="admin"&&<Admin trips={trips} registrations={registrations} stories={stories} cancelTrip={cancelTrip} onEdit={setDraft} approve={approve} media={media} setMedia={setMedia} setTrips={setTrips} setStories={setStories} requests={requests} reviewRequest={reviewRequest} setRequests={setRequests} onCreate={()=>setNewTripOpen(true)} wallPositions={wallPositions} setWallPositions={setWallPositions}/>}
+    {page==="admin"&&role==="admin"&&<Admin trips={trips} registrations={registrations} stories={stories} cancelTrip={cancelTrip} onEdit={setDraft} approve={approve} media={media} setMedia={setMedia} setTrips={setTrips} setStories={setStories} requests={adminRequests} reviewRequest={reviewRequest} setRequests={setRequests} deleteRequest={deleteRequest} onCreate={()=>setNewTripOpen(true)} wallPositions={wallPositions} setWallPositions={setWallPositions}/>}
     {authOpen&&<div className="modal-bg auth-backdrop"><form className="modal auth-modal" onSubmit={submitAuth}>
   <button type="button" className="x auth-close" onClick={()=>setAuthOpen(false)}>×</button>
   <div className="auth-brand"><span className="auth-orb">S×M</span><div><p className="eyebrow">OUR JOURNEY · ACCOUNT</p><h2>{authMode==="signin"?"Welcome back.":authMode==="signup"?"Join the journey.":authMode==="forgot"?"Reset your password.":"Choose a new password."}</h2></div></div>
@@ -785,7 +896,7 @@ function Stories({trips=[],stories,story,setStory,submit,positions={},setPositio
   </section>;
 }
 
-function Admin({trips,registrations,stories,cancelTrip,onEdit,approve,media,setMedia,setTrips,setStories,requests,reviewRequest,setRequests,onCreate,wallPositions,setWallPositions}) {
+function Admin({trips,registrations,stories,cancelTrip,onEdit,approve,media,setMedia,setTrips,setStories,requests,reviewRequest,setRequests,deleteRequest,onCreate,wallPositions,setWallPositions}) {
   const [tab,setTab]=useState("overview");
   const [sidebarOpen,setSidebarOpen]=useState(true);
   const recent=[...requests.map(r=>({id:"r"+r.id,type:"request",text:r.name+" applied for "+r.destination,date:r.submittedAt})),...stories.map(s=>({id:"s"+s.id,type:"memory",text:s.author+" posted "+s.title,date:s.date}))].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,8);
@@ -798,7 +909,7 @@ function Admin({trips,registrations,stories,cancelTrip,onEdit,approve,media,setM
   const editMedia=m=>{const title=prompt("Memory title",m.title);if(title===null)return;const trip=prompt("Trip name",m.trip);if(trip===null)return;setMedia(media.map(x=>x.id===m.id?{...x,title,trip}:x));};
   const deleteMedia=m=>{if(confirm("Delete this memory?"))setMedia(media.filter(x=>x.id!==m.id));};
   const requestHistory=requests;
-  const removeRequest=r=>{if(confirm("Delete this request from history?"))setRequests(requests.filter(x=>x.id!==r.id));};
+  const removeRequest=r=>{if(confirm("Delete this request from history?"))deleteRequest?.(r);};
   const reopenRequest=r=>reviewRequest(r.id,"pending");
   return <section className="page admin-page">
     <aside className={"admin-activity-sidebar "+(!sidebarOpen?"collapsed":"")}><button className="sidebar-toggle" onClick={()=>setSidebarOpen(!sidebarOpen)}>{sidebarOpen?"‹":"›"}</button>{sidebarOpen?<><div className="activity-head"><b>RECENT ACTIVITY</b><span>{pendingRequests.length+pendingStories.length}</span></div><div className="activity-list">{recent.map(x=><div className="activity-item" key={x.id}><i>{x.type==="request"?"✉":"✦"}</i><span>{x.text}</span></div>)}</div></>:<div className="activity-badge">{pendingRequests.length+pendingStories.length}</div>}</aside>

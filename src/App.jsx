@@ -160,7 +160,7 @@ export default function App() {
         const {data,error}=await supabase.auth.signUp({
           email:authForm.email.trim(),
           password:authForm.password,
-          options:{data:{full_name:authForm.name.trim()||authForm.email.split("@")[0]}}
+          options:{data:{full_name:authForm.name.trim()||authForm.email.split("@")[0]},emailRedirectTo:"https://siddhu1046.github.io/travel/"}
         });
         if(error) throw error;
         setAuthForm({email:"",password:"",name:""});

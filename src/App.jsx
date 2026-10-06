@@ -755,9 +755,9 @@ function Stories({trips=[],stories,story,setStory,submit,positions={},setPositio
 
     {!adminView&&<div className="write-wall">
       <div>
-        <p className="eyebrow">WRITE ON THE WALL</p>
-        <h2>Your memory belongs here.</h2>
-        <p>Write something from a trip, a person, a place or a moment you never want to forget. Your note appears instantly. Admin can remove it or send it to moderation if needed.</p>
+        <p className="eyebrow">SHARE FEEDBACK · EXPERIENCE</p>
+        <h2>Your experience belongs here.</h2>
+        <p>Tell us what you loved, learned, disliked, discovered or want to see next. Pick a trip if it is specific, or choose general feedback. Your note appears instantly, and admin can still edit, remove or moderate it.</p>
       </div>
       <form className="story-form wall-form" onSubmit={submit}>
         <select value={story.tripId||""} onChange={e=>setStory({...story,tripId:e.target.value})}>

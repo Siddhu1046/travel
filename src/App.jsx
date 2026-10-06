@@ -212,14 +212,26 @@ function Map({trips,filter,openTrip,theme}) {
   const [zoom,setZoom]=useState(1);
   const [center,setCenter]=useState([79,23.5]);
   const [selectedTrip,setSelectedTrip]=useState(null);
-  const resetView=()=>{if(mode==="india"){setZoom(1);setCenter([79,23.5]);}else{setZoom(.92);setCenter([15,20]);}setSelectedTrip(null);};
-  const switchMode=m=>{setMode(m);setSelectedTrip(null);if(m==="india"){setZoom(1);setCenter([79,23.5]);}else{setZoom(.92);setCenter([15,20]);}};
-  const selectTrip=(trip,e)=>{e?.stopPropagation?.();setSelectedTrip(trip);};
+  const [selectedRegion,setSelectedRegion]=useState(null);
+  const resetView=()=>{if(mode==="india"){setZoom(1);setCenter([79,23.5]);}else{setZoom(.92);setCenter([15,20]);}setSelectedTrip(null);setSelectedRegion(null);};
+  const switchMode=m=>{setMode(m);setSelectedTrip(null);setSelectedRegion(null);if(m==="india"){setZoom(1);setCenter([79,23.5]);}else{setZoom(.92);setCenter([15,20]);}};
+  const selectTrip=(trip,e)=>{e?.stopPropagation?.();setSelectedRegion(null);setSelectedTrip(trip);};
+  const selectRegion=(name,e)=>{e?.stopPropagation?.();setSelectedTrip(null);setSelectedRegion(name);};
   const goToTrip=trip=>{setSelectedTrip(null);openTrip(trip);};
   return <div className="map-wrap">
     <div className="map-caption"><span>{mode==="india"?"INDIA · STATE MAP":"WORLD · TRAVEL MAP"}</span><span>DRAG · WHEEL / PINCH · CLICK</span></div>
     <div className="map-switch"><button className={mode==="india"?"active":""} onClick={()=>switchMode("india")}>🇮🇳 India</button><button className={mode==="world"?"active":""} onClick={()=>switchMode("world")}>🌍 World</button></div>
     <div className="map-tools"><button type="button" onClick={()=>setZoom(z=>Math.min(8,z+.35))}>+</button><button type="button" onClick={()=>setZoom(z=>Math.max(.55,z-.35))}>−</button><button type="button" onClick={resetView}>Reset</button></div>
+    {selectedRegion&&<div className="map-popup region-popup" role="dialog" aria-label={selectedRegion}>
+      <button type="button" className="map-popup-close" onClick={()=>setSelectedRegion(null)}>×</button>
+      <div className="map-popup-icon">{mode==="india"?"🇮🇳":"🌍"}</div><div className="map-popup-body">
+        <div className="map-popup-status">MAP LOCATION</div>
+        <h3>{selectedRegion}</h3>
+        <p>{mode==="india"?"Indian state / union territory":"Country / territory"}</p>
+        <div className="map-popup-meta"><span>📍 Clicked location</span><span>🗺️ {mode==="india"?"India map":"World map"}</span></div>
+        <small>{shown.filter(t=>(mode==="india"?t.state:t.country)===selectedRegion).length ? "Trips from this location are marked on the map." : "No trips are currently attached to this location."}</small>
+      </div>
+    </div>}
     {selectedTrip&&<div className="map-popup" role="dialog" aria-label={selectedTrip.name}>
       <button type="button" className="map-popup-close" onClick={()=>setSelectedTrip(null)}>×</button>
       <div className="map-popup-icon">{selectedTrip.icon}</div><div className="map-popup-body">
@@ -233,10 +245,10 @@ function Map({trips,filter,openTrip,theme}) {
       <ZoomableGroup center={center} zoom={zoom} minZoom={mode==="india"?.75:.55} maxZoom={8} onMove={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}}>
         {mode==="india" ? <Geographies geography="https://raw.githubusercontent.com/AbhinavSwami28/india-official-geojson/main/india-states.topojson">{({geographies})=>geographies.map(g=>{
           const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");const special=/Jammu|Kashmir|Ladakh/i.test(name);
-          return <Geography key={g.rsmKey} geography={g} fill={special?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")} stroke={light?"#71877b":"#6e8579"} strokeWidth={special?1.05:.7} className="india-state" onClick={()=>setSelectedTrip(null)} style={{outline:"none",cursor:"grab"}}/>;
+          return <Geography key={g.rsmKey} geography={g} fill={special?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")} stroke={light?"#71877b":"#6e8579"} strokeWidth={special?1.05:.7} className="india-state" onClick={e=>selectRegion(name,e)} style={{outline:"none",cursor:"grab"}}/>;
         })}</Geographies> : <Geographies geography={world}>{({geographies})=>geographies.map(g=>{
           const country=String(g.properties?.name||"");
-          return <Geography key={g.rsmKey} geography={g} fill={country==="India"?(light?"#d7e4da":"#263a34"):(light?"#edf1ed":"#16241f")} stroke={light?"#8a9b93":"#50665c"} strokeWidth={country==="India"?1.05:.55} className="world-country" onClick={()=>setSelectedTrip(null)} style={{outline:"none",cursor:"grab"}}/>;
+          return <Geography key={g.rsmKey} geography={g} fill={country==="India"?(light?"#d7e4da":"#263a34"):(light?"#edf1ed":"#16241f")} stroke={light?"#8a9b93":"#50665c"} strokeWidth={country==="India"?1.05:.55} className="world-country" onClick={e=>selectRegion(country,e)} style={{outline:"none",cursor:"grab"}}/>;
         })}</Geographies>}
         {shown.map(t=>{const status=effectiveStatus(t),s=STATUS[status];if(mode==="india"&&t.country&&t.country!=="India")return null;return <Marker key={t.id} coordinates={t.coords} onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)} style={{cursor:"pointer",pointerEvents:"all"}}><g className="marker-hit" role="button" tabIndex="0" onClick={e=>selectTrip(t,e)} onDoubleClick={()=>goToTrip(t)}><circle r="27" fill={s.soft} className={["upcoming","ongoing"].includes(status)?"pulse":""}/><circle r="13" fill={light?"#fffdf8":"#07111d"} stroke={s.color} strokeWidth="3"/><circle r="5" fill={s.color}/></g><text textAnchor="middle" y="34" className="marker-label">{t.short}</text></Marker>;})}
       </ZoomableGroup>

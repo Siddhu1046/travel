@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { supabase } from "./lib/supabase";
 import { ComposableMap, Geographies, Geography, Marker, Line, ZoomableGroup, useZoomPanContext } from "react-simple-maps";
 import world from "world-atlas/countries-110m.json";
 
@@ -105,7 +106,13 @@ export default function App() {
   const [requests,setRequests] = useStore("travel-requests",[]);
   const [wallPositions,setWallPositions] = useStore("travel-wall-positions",{});
   const [page,setPage] = useStore("travel-page","home");
-  const [role,setRole] = useStore("travel-role","user");
+  const [session,setSession] = useState(null);
+  const [profile,setProfile] = useState(null);
+  const [authOpen,setAuthOpen] = useState(false);
+  const [authMode,setAuthMode] = useState("signin");
+  const [authForm,setAuthForm] = useState({email:"",password:"",name:""});
+  const [authBusy,setAuthBusy] = useState(false);
+  const role = profile?.role === "admin" ? "admin" : "user";
   const [selected,setSelected] = useStore("travel-selected",INITIAL_TRIPS[3]);
   const [filter,setFilter] = useState("all");
   const [toast,setToast] = useState("");
@@ -114,10 +121,78 @@ export default function App() {
   const [draft,setDraft] = useState(null);
   const [newTripOpen,setNewTripOpen] = useState(false);
   const [alertsOpen,setAlertsOpen] = useState(true);
-  const [adminOpen,setAdminOpen] = useState(false);
-  const [adminPassword,setAdminPassword] = useState("");
+
   const [theme,setTheme] = useStore("travel-theme","dark");
   const [story,setStory] = useState({title:"",text:"",tripId:""});
+  useEffect(()=>{
+    let alive=true;
+    const loadSession=async()=>{
+      const {data:{session:current}}=await supabase.auth.getSession();
+      if(!alive)return;
+      setSession(current);
+      if(current?.user){
+        const {data}=await supabase.from("profiles").select("*").eq("id",current.user.id).maybeSingle();
+        if(alive)setProfile(data||null);
+      }else{
+        setProfile(null);
+      }
+    };
+    loadSession();
+    const {data:{subscription}}=supabase.auth.onAuthStateChange(async (_event,current)=>{
+      if(!alive)return;
+      setSession(current);
+      if(current?.user){
+        const {data}=await supabase.from("profiles").select("*").eq("id",current.user.id).maybeSingle();
+        if(alive)setProfile(data||null);
+      }else{
+        setProfile(null);
+      }
+    });
+    return ()=>{alive=false;subscription.unsubscribe();};
+  },[]);
+
+  const submitAuth = async e => {
+    e.preventDefault();
+    if(!authForm.email.trim() || !authForm.password) return pop("Email and password are required.");
+    setAuthBusy(true);
+    try{
+      if(authMode==="signup"){
+        const {data,error}=await supabase.auth.signUp({
+          email:authForm.email.trim(),
+          password:authForm.password,
+          options:{data:{full_name:authForm.name.trim()||authForm.email.split("@")[0]}}
+        });
+        if(error) throw error;
+        setAuthForm({email:"",password:"",name:""});
+        if(data.session){
+          setAuthOpen(false);
+          pop("Account created and signed in ✓");
+        }else{
+          setAuthMode("signin");
+          pop("Account created. Check your email to confirm, then sign in.");
+        }
+      }else{
+        const {error}=await supabase.auth.signInWithPassword({
+          email:authForm.email.trim(),
+          password:authForm.password
+        });
+        if(error) throw error;
+        setAuthForm({email:"",password:"",name:""});
+        setAuthOpen(false);
+        pop("Welcome back ✓");
+      }
+    }catch(error){
+      pop(error?.message||"Authentication failed.");
+    }finally{
+      setAuthBusy(false);
+    }
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setPage("home");
+    pop("Signed out.");
+  };
   const [requestOpen,setRequestOpen] = useState(false);
   const [request,setRequest] = useState({name:"",destination:"",tripId:"",date:"",people:"2",instagram:"",phone:"",message:""});
   const counts = useMemo(() => trips.reduce((a,t)=>{const s=effectiveStatus(t);if(a[s]===undefined)a[s]=0;a[s]++;return a;},{completed:0,upcoming:0,ongoing:0,wishlist:0,cancelled:0}),[trips]);
@@ -134,6 +209,7 @@ export default function App() {
     pop(t.name+" cancelled.");
   };
   const register = t => {
+    if(!session) { setAuthMode("signin"); setAuthOpen(true); return pop("Sign in first to apply for a trip."); }
     if(!application.name.trim()||!application.phone.trim()) return pop("Name and phone number are required.");
     const already=requests.some(r=>String(r.tripId)===String(t.id)&&r.phone===application.phone&&r.status!=="rejected");
     if(already) return pop("You already applied for this trip.");
@@ -143,6 +219,7 @@ export default function App() {
   };
   const submitStory = e => {
     e.preventDefault();
+    if(!session) { setAuthMode("signin"); setAuthOpen(true); return pop("Sign in first to leave a memory."); }
     if(!story.title.trim()||!story.text.trim()||!story.tripId) return pop("Choose the completed trip this memory belongs to.");
     const trip=trips.find(t=>String(t.id)===String(story.tripId));
     const s=effectiveStatus(trip||{});
@@ -185,7 +262,7 @@ export default function App() {
   return <main className={"site "+(theme==="light"?"theme-light":"theme-dark")}>
     <header className="topbar">
       <button className="brand" onClick={()=>setPage("home")}><span className="brand-mark">S×M</span><span><strong>OUR JOURNEY</strong><small>Siddhu × Mani</small></span></button>
-      <nav>{["home","trips","calendar","memories","stories"].map(p=><button className={page===p?"active":""} onClick={()=>setPage(p)} key={p}>{p}</button>)}<button className="theme-toggle" onClick={()=>setTheme(theme==="dark"?"light":"dark")} aria-label="Toggle theme">{theme==="dark"?"☀ Light":"☾ Dark"}</button>{role==="admin"?<button className={page==="admin"?"active admin":""} onClick={()=>setPage("admin")}>Admin Dashboard</button>:<button className="role" onClick={()=>setAdminOpen(true)}>Admin Login</button>}{role==="admin"&&<button className="role" onClick={()=>{setRole("user");setPage("home")}}>User mode</button>}</nav>
+      <nav>{["home","trips","calendar","memories","stories"].map(p=><button className={page===p?"active":""} onClick={()=>setPage(p)} key={p}>{p}</button>)}<button className="theme-toggle" onClick={()=>setTheme(theme==="dark"?"light":"dark")} aria-label="Toggle theme">{theme==="dark"?"☀ Light":"☾ Dark"}</button>{role==="admin"&&<button className={page==="admin"?"active admin":""} onClick={()=>setPage("admin")}>Admin Dashboard</button>}{session?<button className="role" onClick={signOut}>{profile?.display_name||session.user?.email?.split("@")[0]||"Account"} · Sign out</button>:<button className="role" onClick={()=>{setAuthMode("signin");setAuthOpen(true)}}>Sign in</button>}</nav>
     </header>
     {toast&&<div className="toast">{toast}</div>}
     {alertsOpen && soon.length>0 && <div className="alert-bg"><div className="alert-box"><button className="x" onClick={()=>setAlertsOpen(false)}>×</button><p className="eyebrow">TRIP ALERT</p><h2>Your next adventure is getting close.</h2>{soon.map(t=><button className="alert-trip" key={t.id} onClick={()=>{setAlertsOpen(false);openTrip(t)}}><span>{t.icon}</span><b>{t.name}</b><small>{daysUntil(t.startDate)} days · ₹{t.budget.toLocaleString("en-IN")} · {(registrations[t.id]||t.members).length}/{t.capacity} going</small></button>)}</div></div>}
@@ -196,7 +273,7 @@ export default function App() {
     {page==="memories"&&<Gallery media={media} role={role} setMedia={setMedia}/>}
     {page==="stories"&&<Stories trips={trips} stories={stories.filter(s=>s.status==="approved")} story={story} setStory={setStory} submit={submitStory} positions={wallPositions} setPositions={setWallPositions} onEdit={s=>{const title=prompt("Edit memory title",s.title);if(title===null)return;const text=prompt("Edit memory text",s.text);if(text===null)return;setStories(stories.map(x=>x.id===s.id?{...x,title,text}:x));pop("Memory updated ✓");}} onRemove={s=>{if(confirm("Remove your memory from the wall?"))setStories(stories.filter(x=>x.id!==s.id));}}/>}
     {page==="admin"&&role==="admin"&&<Admin trips={trips} registrations={registrations} stories={stories} cancelTrip={cancelTrip} onEdit={setDraft} approve={approve} media={media} setMedia={setMedia} setTrips={setTrips} setStories={setStories} requests={requests} reviewRequest={reviewRequest} setRequests={setRequests} onCreate={()=>setNewTripOpen(true)} wallPositions={wallPositions} setWallPositions={setWallPositions}/>}
-    {adminOpen&&<div className="modal-bg"><form className="modal" onSubmit={e=>{e.preventDefault();if(adminPassword==="admin123"){setRole("admin");setPage("admin");setAdminOpen(false);setAdminPassword("");pop("Admin access granted ✓")}else pop("Wrong admin password.")}}><button type="button" className="x" onClick={()=>{setAdminOpen(false);setAdminPassword("")}}>×</button><p className="eyebrow">SECURE AREA</p><h2>Admin login</h2><p className="hero-text">Enter the admin password to open the control center.</p><label>Password<input autoFocus type="password" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)} placeholder="Admin password"/></label><button className="primary">Enter dashboard →</button><small style={{opacity:.55}}>Demo password: admin123</small></form></div>}
+    {authOpen&&<div className="modal-bg"><form className="modal auth-modal" onSubmit={submitAuth}><button type="button" className="x" onClick={()=>setAuthOpen(false)}>×</button><p className="eyebrow">OUR JOURNEY · ACCOUNT</p><h2>{authMode==="signin"?"Welcome back.":"Create your account."}</h2><p className="hero-text">{authMode==="signin"?"Sign in to apply for trips, save your profile and leave memories.":"Create an account to join adventures and build your travel history."}</p>{authMode==="signup"&&<label>Name<input autoFocus value={authForm.name} onChange={e=>setAuthForm({...authForm,name:e.target.value})} placeholder="Your name"/></label>}<label>Email<input autoFocus={authMode==="signin"} type="email" value={authForm.email} onChange={e=>setAuthForm({...authForm,email:e.target.value})} placeholder="you@example.com" required/></label><label>Password<input type="password" value={authForm.password} onChange={e=>setAuthForm({...authForm,password:e.target.value})} placeholder="Minimum 6 characters" minLength="6" required/></label><button className="primary" disabled={authBusy}>{authBusy?"Please wait…":authMode==="signin"?"Sign in →":"Create account →"}</button><button type="button" className="text-button" onClick={()=>setAuthMode(authMode==="signin"?"signup":"signin")}>{authMode==="signin"?"New here? Create an account":"Already have an account? Sign in"}</button><small className="auth-note">Admin access is granted by the site's admin role — there is no shared admin password in the browser.</small></form></div>}
     {draft&&<div className="modal-bg"><form className="modal" onSubmit={saveTrip}><button type="button" className="x" onClick={()=>setDraft(null)}>×</button><p className="eyebrow">ADMIN · EDIT TRIP</p><h2>{draft.name}</h2><label>Name<input name="name" defaultValue={draft.name}/></label><label>Place<input name="place" defaultValue={draft.place}/></label><div className="two"><label>Status<select name="status" defaultValue={draft.status}><option value="upcoming">Upcoming</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="wishlist">Wishlist</option><option value="cancelled">Cancelled</option></select></label><label>Capacity<input name="capacity" type="number" defaultValue={draft.capacity}/></label></div><div className="two"><label>Country<select name="country" defaultValue={draft.country||"India"}><option>India</option><option>World</option></select></label><label>State / UT<input name="state" list="india-states-edit" defaultValue={draft.state||""} placeholder="e.g. Goa, Karnataka"/></label></div><datalist id="india-states-edit">{INDIA_STATES.map(s=><option key={s} value={s}/>)}</datalist><div className="two"><label>Longitude <small>World locations</small><input name="lng" type="number" step="any" defaultValue={draft.coords?.[0]||0}/></label><label>Latitude <small>World locations</small><input name="lat" type="number" step="any" defaultValue={draft.coords?.[1]||0}/></label></div><div className="two"><label>Start<input name="startDate" type="date" defaultValue={draft.startDate}/></label><label>End<input name="endDate" type="date" defaultValue={draft.endDate}/></label></div><label>Budget ₹<input name="budget" type="number" defaultValue={draft.budget}/></label><label>Summary<textarea name="summary" defaultValue={draft.summary}/></label><label>Experience / story<textarea name="experience" defaultValue={draft.experience||""} placeholder="What happened on this trip?"/></label><ItineraryEditor initial={draft.itinerary||[{day:"01",title:"Arrival",text:"Start the journey."},{day:"02",title:"Explore",text:"Main experiences."},{day:"03",title:"Return",text:"Final memories and journey home."}]} /><label>Gallery URLs <small>one URL per line</small><textarea name="gallery" defaultValue={(draft.gallery||[]).join("\n")} placeholder="https://..."/></label><label>Possible dates <small>one date per line — useful for wishlist planning</small><textarea name="possibleDates" defaultValue={(draft.possibleDates||[]).join("\n")} placeholder="2026-12-12\n2027-01-09"/></label><button className="primary">Save trip</button></form></div>}
     {newTripOpen&&<div className="modal-bg"><form className="modal" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);const id=Date.now();const country=f.get("country")||"India";const state=f.get("state")||"";const preset=country==="India"?INDIA_LOCATIONS[state]:null;const trip={id,possibleDates:(f.get("possibleDates")||"").split("\n").map(x=>x.trim()).filter(Boolean),name:f.get("name"),short:(f.get("short")||"TRIP").toUpperCase(),status:f.get("status"),startDate:f.get("startDate"),endDate:f.get("endDate"),place:f.get("place"),country,state,coords:preset?.coords||[Number(f.get("lng")||0),Number(f.get("lat")||0)],summary:f.get("summary"),budget:Number(f.get("budget")||0),members:[],capacity:Number(f.get("capacity")||8),icon:f.get("icon")||"🧭",experience:f.get("experience")||"",itinerary:[],gallery:[]};setTrips([...trips,trip]);setNewTripOpen(false);pop("New trip created.");}}><button type="button" className="x" onClick={()=>setNewTripOpen(false)}>×</button><p className="eyebrow">ADMIN · NEW TRIP</p><h2>Create a trip</h2><div className="two"><label>Name<input name="name" placeholder="Trip name"/></label><label>Short label<input name="short" placeholder="GOA"/></label></div><label>Place<input name="place" placeholder="Destination / route"/></label><div className="two"><label>Status<select name="status" defaultValue="wishlist"><option value="completed">Completed</option><option value="upcoming">Upcoming</option><option value="wishlist">Wishlist</option></select></label><label>Capacity<input name="capacity" type="number" defaultValue="8"/></label></div><div className="two"><label>Start<input name="startDate" type="date"/></label><label>End<input name="endDate" type="date"/></label></div><div className="two"><label>Country<select name="country" defaultValue="India"><option>India</option><option>World</option></select></label><label>State / UT<input name="state" list="india-states" placeholder="e.g. Goa, Karnataka"/></label></div><datalist id="india-states">{INDIA_STATES.map(s=><option key={s} value={s}/>)}</datalist><div className="two"><label>Longitude <small>World locations</small><input name="lng" type="number" step="any" defaultValue="78.5"/></label><label>Latitude <small>World locations</small><input name="lat" type="number" step="any" defaultValue="21.5"/></label></div><div className="two"><label>Budget ₹<input name="budget" type="number" defaultValue="0"/></label><label>Icon<input name="icon" placeholder="🌴"/></label></div><label>Summary<textarea name="summary" placeholder="Short trip description"/></label><label>Experience<textarea name="experience" placeholder="What makes this trip special?"/></label><label>Possible dates <small>one date per line</small><textarea name="possibleDates" placeholder="2026-12-12\n2027-01-09"/></label><button className="primary">Create trip →</button></form></div>}
     {requestOpen&&<div className="modal-bg"><form className="modal request-modal" onSubmit={submitRequest}><button type="button" className="x" onClick={()=>setRequestOpen(false)}>×</button><p className="eyebrow">PLAN WITH US</p><h2>Request a trip</h2><p className="hero-text">Tell us where you want to go and what kind of adventure you have in mind.</p><label>Trip / destination<select value={request.tripId} onChange={e=>{const id=e.target.value;const t=trips.find(x=>String(x.id)===id);setRequest({...request,tripId:id,destination:t?.name||request.destination})}}><option value="">New destination / custom trip</option>{trips.filter(t=>t.status!=="completed").map(t=><option key={t.id} value={t.id}>{t.name} · {t.status}</option>)}</select></label><div className="two"><label>Name<input value={request.name} onChange={e=>setRequest({...request,name:e.target.value})} placeholder="Your full name"/></label><label>Destination<input value={request.destination} onChange={e=>setRequest({...request,destination:e.target.value})} placeholder="Where to?"/></label></div><div className="two"><label>Phone number<input value={request.phone} onChange={e=>setRequest({...request,phone:e.target.value})} placeholder="+91 XXXXX XXXXX"/></label><label>Instagram ID<input value={request.instagram} onChange={e=>setRequest({...request,instagram:e.target.value})} placeholder="@yourhandle"/></label></div><div className="two"><label>Preferred date<input value={request.date} onChange={e=>setRequest({...request,date:e.target.value})} type="date"/></label><label>People<input value={request.people} onChange={e=>setRequest({...request,people:e.target.value})} type="number" min="1" placeholder="2"/></label></div><label>What are you looking for?<textarea value={request.message} onChange={e=>setRequest({...request,message:e.target.value})} placeholder="Beaches, mountains, road trip, budget, activities..."/></label><button className="primary">Send request →</button></form></div>}

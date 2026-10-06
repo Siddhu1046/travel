@@ -490,3 +490,47 @@
 .theme-light .hero-copy{text-shadow:0 1px 20px rgba(255,255,255,.42)}
 .theme-light .site-footer{background:rgba(255,255,255,.28);border-top:1px solid rgba(255,255,255,.55)}
 @media(max-width:900px){.theme-light .admin-command{top:70px}}
+
+/* Calendar navigation upgrade */
+.calendar-head{gap:20px}
+.calendar-nav{display:flex;align-items:center;gap:6px;padding:7px;border:1px solid var(--line);border-radius:15px;background:var(--panel-2);white-space:nowrap}
+.calendar-nav button,.calendar-nav select{height:36px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text);font-size:11px}
+.calendar-nav button{min-width:36px;padding:0 10px}
+.calendar-nav select{padding:0 9px;cursor:pointer}
+.calendar-nav button:hover,.calendar-nav select:hover{background:rgba(255,255,255,.07);border-color:var(--line)}
+.calendar-nav .today-btn{padding:0 12px;background:rgba(56,217,150,.10);color:var(--green);border-color:rgba(56,217,150,.18)}
+.calendar-jump{display:flex;align-items:center;gap:8px;margin:0 0 18px;padding:10px 12px;border:1px solid var(--line);border-radius:15px;background:var(--panel-2);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.calendar-jump>span{font:8px "DM Mono";letter-spacing:.12em;color:var(--muted);margin-right:4px}
+.calendar-jump input{height:34px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);padding:0 10px}
+.calendar-jump button{height:34px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--text);padding:0 11px}
+.calendar-jump button:hover{background:rgba(255,255,255,.07)}
+.calendar-jump b{margin-left:auto;font-size:12px}
+.theme-light .calendar-nav,.theme-light .calendar-jump{background:rgba(255,255,255,.44);border-color:rgba(255,255,255,.76);box-shadow:0 14px 40px rgba(50,65,58,.09),inset 0 1px 0 rgba(255,255,255,.78);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.theme-light .calendar-nav select,.theme-light .calendar-jump input{background:rgba(255,255,255,.38);color:#17231f;border-color:rgba(255,255,255,.7)}
+.theme-light .calendar-jump button{border-color:rgba(255,255,255,.7);color:#30403a}
+.theme-light .calendar-nav .today-btn{background:rgba(22,122,85,.09);color:#167a55;border-color:rgba(22,122,85,.16)}
+.theme-light .calendar-nav button:hover,.theme-light .calendar-nav select:hover,.theme-light .calendar-jump button:hover{background:rgba(255,255,255,.62)}
+
+.calendar-page .calendar-grid{user-select:none}
+.calendar-page .calendar-cell{transition:background .18s ease}
+.calendar-page .calendar-cell:hover{background:color-mix(in srgb,var(--panel) 88%,var(--green))}
+.calendar-page .calendar-event{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}
+.calendar-page .calendar-event:hover{transform:translateY(-2px);box-shadow:0 7px 18px rgba(0,0,0,.10)}
+
+@media(max-width:760px){
+  .calendar-head{align-items:flex-start;flex-direction:column}
+  .calendar-nav{width:100%;overflow:auto}
+  .calendar-nav select{min-width:110px}
+  .calendar-jump{flex-wrap:wrap}
+  .calendar-jump b{width:100%;margin-left:0}
+}
+
+/* Map interaction reliability */
+.map-wrap .map{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.map-wrap .map:active{cursor:grabbing}
+.map-wrap .rsm-zoomable-group{pointer-events:all}
+.map-wrap .rsm-geographies,.map-wrap .rsm-geography{pointer-events:all}
+.map-wrap .rsm-marker,.map-wrap .rsm-marker *{pointer-events:all}
+.map-wrap svg{overflow:visible}
+.marker-hit{pointer-events:all;cursor:pointer}
+.marker-hit circle,.marker-hit text{pointer-events:all}

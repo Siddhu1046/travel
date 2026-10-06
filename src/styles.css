@@ -147,11 +147,11 @@
 .wall-controls span{font:9px "DM Mono";color:var(--muted);padding:0 7px}
 
 .memory-wall{position:relative;height:min(70vh,760px);min-height:520px;overflow:hidden;border:1px solid var(--line);border-radius:28px;background:#c8bda7;box-shadow:0 30px 100px rgba(0,0,0,.22);touch-action:none;user-select:none}
-.memory-wall:before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.035),rgba(0,0,0,.035)),repeating-linear-gradient(0deg,rgba(80,58,35,.055) 0 1px,transparent 1px 5px);opacity:.8;pointer-events:none;z-index:2}
-.memory-wall:after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(35,26,16,.2);pointer-events:none;z-index:3}
-.wall-paper{position:absolute;left:50%;top:50%;width:6000px;height:4500px;transform-origin:center center;background-color:#c8bda7;background-image:radial-gradient(circle at 20% 20%,rgba(255,255,255,.09),transparent 20%),repeating-linear-gradient(0deg,rgba(80,58,35,.045) 0 1px,transparent 1px 5px);transition:transform .18s ease-out}
-.wall-center-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:10px "DM Mono";letter-spacing:.22em;color:rgba(62,51,38,.27);pointer-events:none;white-space:nowrap}
-.memory-note{position:absolute;left:50%;top:50%;width:235px;min-height:190px;padding:27px 20px 19px;border:0;color:#2f2a23;text-align:left;box-shadow:0 14px 28px rgba(38,29,19,.24),0 3px 5px rgba(38,29,19,.16);cursor:grab;transition:box-shadow .2s,filter .2s;transform-origin:center;touch-action:none}
+.memory-wall:before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.035),rgba(0,0,0,.035)),repeating-linear-gradient(0deg,rgba(80,58,35,.055) 0 1px,transparent 1px 5px);opacity:.8;pointer-events:none;z-index:3}
+.memory-wall:after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(35,26,16,.2);pointer-events:none;z-index:4}
+.wall-paper{position:absolute;left:50%;top:50%;width:6000px;height:4500px;z-index:1;transform-origin:center center;background-color:#c8bda7;background-image:radial-gradient(circle at 20% 20%,rgba(255,255,255,.09),transparent 20%),repeating-linear-gradient(0deg,rgba(80,58,35,.045) 0 1px,transparent 1px 5px);transition:transform .18s ease-out}
+.wall-center-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:10px "DM Mono";letter-spacing:.22em;color:rgba(62,51,38,.27);pointer-events:none;white-space:nowrap;z-index:2}
+.memory-note{position:absolute;left:50%;top:50%;width:235px;min-height:190px;padding:27px 20px 19px;border:0;color:#2f2a23;text-align:left;box-shadow:0 14px 28px rgba(38,29,19,.24),0 3px 5px rgba(38,29,19,.16);cursor:grab;transition:box-shadow .2s,filter .2s;transform-origin:center;touch-action:none;z-index:5}
 .memory-note:active{cursor:grabbing}
 .memory-note:hover,.memory-note.selected{z-index:30;box-shadow:0 24px 48px rgba(38,29,19,.34),0 5px 8px rgba(38,29,19,.16);filter:saturate(1.05)}
 .memory-note:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,rgba(255,255,255,.22),transparent 35%,rgba(0,0,0,.04))}
@@ -892,3 +892,12 @@
   from{opacity:0;transform:translateY(-8px) scale(.98)}
   to{opacity:1;transform:translateY(0) scale(1)}
 }
+
+
+/* Memory wall visibility + feedback experience */
+.memory-wall .wall-paper .memory-note{visibility:visible;opacity:1}
+.wall-form select{width:100%;height:46px;padding:0 13px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
+.wall-form select option{background:#0b1115;color:#eef4f0}
+.theme-light .wall-form select option{background:#fffdf8;color:#17201d}
+.write-wall .eyebrow{margin-bottom:10px}
+.write-wall .primary{min-height:46px}

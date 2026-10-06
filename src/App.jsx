@@ -221,7 +221,7 @@ function Map({trips,filter,openTrip,theme}) {
   return <div className="map-wrap">
     <div className="map-caption"><span>{mode==="india"?"INDIA · STATE MAP":"WORLD · TRAVEL MAP"}</span><span>DRAG · WHEEL / PINCH · CLICK</span></div>
     <div className="map-switch"><button className={mode==="india"?"active":""} onClick={()=>switchMode("india")}>🇮🇳 India</button><button className={mode==="world"?"active":""} onClick={()=>switchMode("world")}>🌍 World</button></div>
-    <div className="map-tools"><button type="button" onClick={()=>setZoom(z=>Math.min(8,z+.35))}>+</button><button type="button" onClick={()=>setZoom(z=>Math.max(.55,z-.35))}>−</button><button type="button" onClick={resetView}>Reset</button></div>
+    <div className="map-tools"><button type="button" onClick={()=>setZoom(z=>Math.min(mode==="india"?3.6:3.1,z+.25))}>+</button><button type="button" onClick={()=>setZoom(z=>Math.max(mode==="india"?.82:.65,z-.25))}>−</button><button type="button" onClick={resetView}>Reset</button></div>
     {selectedRegion&&<div className="map-popup region-popup" role="dialog" aria-label={selectedRegion}>
       <button type="button" className="map-popup-close" onClick={()=>setSelectedRegion(null)}>×</button>
       <div className="map-popup-icon">{mode==="india"?"🇮🇳":"🌍"}</div><div className="map-popup-body">
@@ -242,7 +242,7 @@ function Map({trips,filter,openTrip,theme}) {
       </div>
     </div>}
     <ComposableMap projection={mode==="india"?"geoMercator":"geoEqualEarth"} projectionConfig={mode==="india"?{scale:820,center:[79,24]}:{scale:155,center:[0,10]}} className="map" preserveAspectRatio="xMidYMid meet">
-      <ZoomableGroup center={center} zoom={zoom} minZoom={mode==="india"?.75:.55} maxZoom={8} onMove={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}}>
+      <ZoomableGroup center={center} zoom={zoom} minZoom={mode==="india"?.82:.65} maxZoom={mode==="india"?3.6:3.1} translateExtent={[[-180,-120],[980,760]]} onMoveEnd={({coordinates,zoom})=>{setCenter(coordinates);setZoom(zoom)}}>
         {mode==="india" ? <Geographies geography="https://raw.githubusercontent.com/AbhinavSwami28/india-official-geojson/main/india-states.topojson">{({geographies})=>geographies.map(g=>{
           const name=String(g.properties?.name||g.properties?.NAME_1||g.properties?.st_nm||"");const special=/Jammu|Kashmir|Ladakh/i.test(name);
           return <Geography key={g.rsmKey} geography={g} fill={special?(light?"#d7e4da":"#263a34"):(light?"#e9eee8":"#16241f")} stroke={light?"#71877b":"#6e8579"} strokeWidth={special?1.05:.7} className="india-state" onClick={e=>selectRegion(name,e)} style={{outline:"none",cursor:"grab"}}/>;

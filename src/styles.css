@@ -698,3 +698,31 @@
   .calendar-cell{min-height:76px;padding:5px}
   .calendar-event{font-size:7px}
 }
+
+
+/* Map labels stay readable in both themes; markers shrink as the map zooms */
+.theme-dark .marker-label{
+  fill:#f1f7f3;
+  stroke:#07111d;
+  stroke-width:3px;
+  paint-order:stroke fill;
+  font:700 11px "DM Mono";
+  letter-spacing:.04em;
+}
+.theme-light .marker-label{
+  fill:#17231f;
+  stroke:#f4f8f5;
+  stroke-width:3px;
+  paint-order:stroke fill;
+  font:700 11px "DM Mono";
+  letter-spacing:.04em;
+}
+.marker-hit{
+  transform-origin:0 0;
+  transition:filter .18s ease;
+}
+.rsm-marker:hover .marker-hit{filter:brightness(1.1) drop-shadow(0 4px 10px rgba(0,0,0,.18))}
+.map-wrap .rsm-zoomable-group{will-change:transform}
+.map-wrap{overscroll-behavior:contain}
+.map-wrap .map{overscroll-behavior:contain}
+.calendar-jump b{display:none}

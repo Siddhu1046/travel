@@ -1060,3 +1060,32 @@
 .memory-wall .wall-paper .memory-note.selected{z-index:30!important}
 .memory-wall .wall-paper .memory-note .note-pin,
 .memory-wall .wall-paper .memory-note .note-actions{position:relative;z-index:6}
+
+
+.trip-card-highlights{display:grid;gap:7px;margin:13px 0 15px;padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:#ffffff05;text-align:left}
+.trip-card-highlights span{font-size:10px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.package-plan,.package-expenses{margin:30px 0;padding:clamp(18px,3vw,28px);border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#ffffff08,#ffffff03);backdrop-filter:blur(18px)}
+.package-plan-list{display:grid;gap:10px;margin-top:18px}
+.package-stop{display:grid;grid-template-columns:84px minmax(0,1fr);gap:16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#ffffff04}
+.package-stop-day{font:10px "DM Mono";color:var(--green);letter-spacing:.08em;padding-top:4px}
+.package-stop-info{min-width:0}
+.package-stop-info h3{margin:0 0 7px;font-size:17px}
+.package-stop-info p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.7}
+.package-stop-info .package-stop-location{color:var(--text);font-weight:650}
+.package-stop-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.package-stop-meta span{font:9px "DM Mono";padding:7px 9px;border-radius:8px;border:1px solid var(--line);color:var(--muted)}
+.package-expenses>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}
+.package-expenses article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#ffffff04}
+.package-expenses article span{font-size:12px}
+.package-expenses article b{font-size:12px}
+.package-expenses article small{grid-column:1/-1;color:var(--muted);font-size:10px}
+.package-expenses footer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding-top:14px;border-top:1px solid var(--line);font-size:12px}
+.package-expenses footer b{font-size:14px}
+.itinerary-editor .day-editor{display:grid;gap:9px}
+.itinerary-editor .day-editor .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:700px){
+ .trip-card-highlights span{font-size:9px}
+ .package-stop{grid-template-columns:1fr;gap:6px;padding:13px}
+ .package-expenses>div{grid-template-columns:1fr}
+ .itinerary-editor .day-editor .two{grid-template-columns:1fr}
+}
